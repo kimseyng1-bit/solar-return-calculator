@@ -62,8 +62,8 @@
   table.planets tr.luminary{background:#201a48;}
   table.planets tr.luminary td:first-child{font-weight:700; color:var(--gold2);}
   table.planets td.mutedCol{color:#8a84b8; font-size:12px;}
-  table.planets.refTable{opacity:.7;}
-  table.planets.refTable th, table.planets.refTable td{font-size:12px; color:var(--sub);}
+  table.planets tr.outerRow{opacity:.7;}
+  table.planets tr.outerRow td{font-size:12px; color:var(--sub);}
   .glyph{margin-right:4px; color:var(--gold2);}
   .retroBadge{
     display:inline-block; margin-left:4px; padding:1px 7px; border-radius:10px;
@@ -308,7 +308,6 @@
         <a href="#sec-aspects">어스펙트</a>
         <a href="#sec-narrative">행성별 흐름</a>
         <a href="#sec-monthly">월별 흐름</a>
-        <a href="#sec-outer">외행성·노드</a>
         <a href="#sec-conclusion">마무리 결론</a>
       </div>
     </div>
@@ -336,12 +335,12 @@
       <div class="pillars" id="mcInfo"></div>
 
       <h2 style="margin-top:22px;" id="sec-planets">행성 배치 (R = 역행)</h2>
-      <div class="tableCaption">아래는 앞서 설명한 내용을 숫자로 요약한 빠른 참조표입니다. 자세한 해석은 아래 <a href="#sec-narrative">행성별 구체적 흐름</a>을 참고하세요.</div>
+      <div class="tableCaption">아래는 앞서 설명한 내용을 숫자로 요약한 빠른 참조표입니다(천왕성·해왕성·명왕성·노드는 워낙 느리게 움직여 표의 별자리·하우스 값 자체는 큰 의미가 없어 옅게 표시했어요). 자세한 해석은 아래 <a href="#sec-narrative">행성별 구체적 흐름</a>을 참고하세요.</div>
       <table class="planets">
         <thead><tr><th>천체</th><th>별자리</th><th>도수</th><th>SR 하우스</th><th>원국 하우스</th></tr></thead>
         <tbody id="planetTable"></tbody>
       </table>
-      <div class="tableFootnote">※ 원국 하우스 값에 대한 해석은 아래 <a href="#sec-natal">원국(태어난 순간) 대비 비교</a>에서 자세히 볼 수 있습니다.</div>
+      <div class="tableFootnote">※ 원국 하우스 값에 대한 해석은 아래 <a href="#sec-narrative">행성별 구체적 흐름</a>에서 천체마다 확인할 수 있습니다.</div>
 
       <h2 style="margin-top:22px;" id="sec-natal">원국(태어난 순간) 대비 비교</h2>
       <div class="pillars" id="natalCompare"></div>
@@ -357,10 +356,6 @@
         솔라리턴 차트의 <b>1번째 하우스</b>(상승궁이 있는 자리)를 이번 회귀월로 놓고, 2번째 하우스는 다음 달, 3번째 하우스는 그다음 달… 이런 식으로 하우스 순서를 12개월에 그대로 대응시킨 방식입니다. 즉 아래 카드 순서가 곧 시간 순서입니다. <span class="chip good">⭐ 주목 시기</span> 배지가 붙은 달은 한 해 중 특히 힘이 몰리는 시기예요.
       </div>
       <div class="pillars" id="monthlyFlow"></div>
-
-      <h2 style="margin-top:22px;" id="sec-outer">외행성 · 노드 (참고용)</h2>
-      <div class="tableCaption">천왕성·해왕성·명왕성·노드는 아주 천천히 움직이는 천체라, 표에 나온 별자리·하우스 자체는 큰 의미가 없어요. 대신 아래 각 카드의 "이번 해 특별히 도드라지는 점" 문장이 실질적으로 도움이 됩니다.</div>
-      <div id="outerPlanets"></div>
 
       <div class="conclusion" id="sec-conclusion">
         <h2>✦ 마무리 결론</h2>
@@ -773,26 +768,27 @@ function houseMapOf(cusps, planets, order){
 function planetNarrativeHtml(opts){
   var cusps=opts.cusps, planets=opts.planets, order=opts.order, retro=opts.retro||{},
       natalCusps=opts.natalCusps, baseYear=opts.baseYear, baseMonth=opts.baseMonth,
-      fullPlanets=opts.fullPlanets, fullOrder=opts.fullOrder, natalPoints=opts.natalPoints;
+      natalPoints=opts.natalPoints;
 
-  // 개인화: 이 천체가 실제로 맺은 가장 강한 어스펙트를 찾아, 같은 하우스라도 사람마다 다르게 읽히게 한다
-  var amongForFlavor = aspectsAmong(fullPlanets, fullOrder);
-  var crossForFlavor = aspectsCross(fullPlanets, fullOrder, natalPoints);
-  function strongestAspectForFlavor(name){
-    var candidates = amongForFlavor.filter(function(x){ return x.a===name || x.b===name; })
+  // 개인화 1) 이 천체가 실제로 맺은 가장 강한 어스펙트를 찾아, 같은 하우스라도 사람마다 다르게 읽히게 한다
+  var among = aspectsAmong(planets, order);
+  var cross = aspectsCross(planets, order, natalPoints);
+  function strongestAspectFor(name){
+    var candidates = among.filter(function(x){ return x.a===name || x.b===name; })
       .map(function(x){ return {orb:x.asp.orb, aspName:x.asp.name, partner:(x.a===name?x.b:x.a)}; })
-      .concat(crossForFlavor.filter(function(x){ return x.sr===name; })
+      .concat(cross.filter(function(x){ return x.sr===name; })
         .map(function(x){ return {orb:x.asp.orb, aspName:x.asp.name, partner:"원래의 "+x.natal}; }));
     if(!candidates.length) return null;
     candidates.sort(function(a,b){ return a.orb-b.orb; });
     return candidates[0];
   }
 
-  // 6. 원국 대비 비교의 스텔리움(2개 이상 집중) 판정과 동일한 방식으로 교차 참조 여부 계산
-  var natalHouseCount = {};
+  // 개인화 4) 원국 기준 스텔리움 — 예전 '원국 대비 비교'의 하우스별 그룹과 같은 계산을 이 카드 안으로 흡수
+  var natalHouseMembers = {};
   order.forEach(function(name){
     var h = houseOfLongitude(planets[name], natalCusps);
-    natalHouseCount[h] = (natalHouseCount[h]||0) + 1;
+    if(!natalHouseMembers[h]) natalHouseMembers[h] = [];
+    natalHouseMembers[h].push(name);
   });
 
   var html = "";
@@ -801,29 +797,35 @@ function planetNarrativeHtml(opts){
     var house = houseOfLongitude(lon, cusps);
     var sign = signOf(lon);
     var isLuminary = (name==="태양" || name==="달");
+    var isNode = (name==="노드");
     var natalHouse = houseOfLongitude(lon, natalCusps);
-    var isCluster = natalHouseCount[natalHouse] >= 2;
+    var siblings = natalHouseMembers[natalHouse].filter(function(n){ return n!==name; });
+    var isCluster = siblings.length >= 1;
 
     var glyph = "<span class='glyph'>"+(PLANET_GLYPH[name]||"")+"</span>";
-    var retroBadge = retro[name] ? " <span class='retroBadge' title='역행 중 — 재점검·재정비·복습의 시기'>↺ R</span>" : "";
+    var retroBadge = isNode
+      ? " <span class='chip neutral' title='노드는 항상 역행 방향으로만 움직이는 가상의 점입니다'>항상 역행</span>"
+      : (retro[name] ? " <span class='retroBadge' title='역행 중 — 재점검·재정비·복습의 시기'>↺ R</span>" : "");
     var luminaryBadge = isLuminary ? " <span class='chip neutral'>☉☽ 핵심 천체</span>" : "";
+    var clusterBadge = isCluster ? " <span class='chip warn'>⭐ 원국 스텔리움</span>" : "";
 
-    // 1. 월별 흐름과 중복되던 하우스 이벤트 예시 문장을 빼고, 해당 월로 바로 이동하는 링크로 대체
     var totalMonth = baseMonth-1+(house-1);
     var year = baseYear + Math.floor(totalMonth/12);
     var month = totalMonth%12+1;
 
-    // 6. 원국 대비 비교 섹션과의 교차 참조
-    var crossRef = isCluster ? " 위 <a href='#sec-natal'>원국 대비 비교</a>에서 강조된 영역과 같은 자리이기도 합니다." : "";
+    // 개인화 4) 원국 스텔리움 — 예전엔 '원국 대비 비교'에서 별도로 설명하던 내용을 이 카드 문장 안에 바로 흡수
+    var crossRef = isCluster
+      ? " 원국 기준으로는 "+siblings.join("·")+josaWa(siblings[siblings.length-1])+" 같은 영역("+natalHouse+"번째 하우스 · "+HOUSE_THEME[natalHouse-1]+")에 몰려 있어, 그만큼 힘이 실리는 자리예요."
+      : "";
 
-    // 개인화: 어스펙트 강도(있는지·강한지) × 원국과 같은 하우스인지 여부를 하나의 문장으로 결합
-    var strongestFlavor = strongestAspectForFlavor(name);
+    // 개인화 1)+3) 어스펙트 강도(있는지·강한지) × 원국과 같은 하우스인지 여부를 하나의 문장으로 결합
+    var strongest = strongestAspectFor(name);
     var sameHouseAsNatal = (house === natalHouse);
     var flavor;
-    if(strongestFlavor && !sameHouseAsNatal){
-      flavor = "평소(원국)엔 힘이 약하던 영역인데 "+strongestFlavor.partner+josaWa(strongestFlavor.partner)+" "+strongestFlavor.aspName+josaEuro(strongestFlavor.aspName)+" 이어져 있어 올해 유독 강하게 드러나요.";
-    } else if(strongestFlavor){
-      flavor = "원래도 익숙한 영역인 데다 "+strongestFlavor.partner+josaWa(strongestFlavor.partner)+" "+strongestFlavor.aspName+"까지 겹쳐 있어 뚜렷하게 드러나요.";
+    if(strongest && !sameHouseAsNatal){
+      flavor = "평소(원국)엔 힘이 약하던 영역인데 "+strongest.partner+josaWa(strongest.partner)+" "+strongest.aspName+josaEuro(strongest.aspName)+" 이어져 있어 올해 유독 강하게 드러나요.";
+    } else if(strongest){
+      flavor = "원래도 익숙한 영역인 데다 "+strongest.partner+josaWa(strongest.partner)+" "+strongest.aspName+"까지 겹쳐 있어 뚜렷하게 드러나요.";
     } else if(!sameHouseAsNatal){
       flavor = "평소(원국)엔 힘이 약하던 영역이라, 올해 유독 낯설게 느껴질 수 있어요.";
     } else {
@@ -831,20 +833,30 @@ function planetNarrativeHtml(opts){
     }
 
     var cardClass = "pillar" + (isLuminary ? " key" : "");
-    var headline = PLANET_HEADLINE[name] || (name+"의 기운이 나타나는 부분");
+    var headline = PLANET_HEADLINE[name] || OUTER_HEADLINE[name] || (name+"의 기운이 나타나는 부분");
 
     html += "<div class='"+cardClass+"'>"
-      + "<b>"+headline+" — "+HOUSE_THEME[house-1]+"</b>"+retroBadge+luminaryBadge
+      + "<b>"+headline+" — "+HOUSE_THEME[house-1]+"</b>"+retroBadge+luminaryBadge+clusterBadge
       + " <span class='pillarMeta'>("+glyph+name+" · "+sign+" "+degInSign(lon)+"° · "+house+"번째 하우스)</span>"
-      // 2+7. 문형을 천체별로 다르게 배열하고, '한 줄 핵심'과 '보충 설명'으로 청킹
       + "<div class='keyLine'>"+(function(){
           var tplFn = PLANET_KEYLINE_TEMPLATE[name];
           return tplFn ? tplFn(sign, SIGN_TRAIT[sign], PLANET_ACTION[name]) : sign+"다운 "+SIGN_TRAIT[sign]+" "+name+josaI(name)+" "+PLANET_ACTION[name];
         })()+"</div>"
-      + "<div class='subLine'>예를 들어 "+HOUSE_EVENT_EX[house-1]+" 상황에서 힘을 발휘해요. "+flavor+" 정확한 시기는 <a href='#sec-monthly'>"+year+"년 "+month+"월경 월별 흐름</a>에서 볼 수 있습니다."+crossRef+"</div>";
+      + "<div class='subLine'>예를 들어 "+HOUSE_EVENT_EX[house-1]+" 상황에서 힘을 발휘해요. "+flavor+" 정확한 시기는 <a href='#sec-monthly'>"+year+"년 "+month+"월경 월별 흐름</a>에서 볼 수 있습니다."+crossRef+"</div>"
+      + (OUTER_MEANING[name] ? "<div class='subLine'>"+OUTER_MEANING[name]+"</div>" : "");
 
-    // 5. 역행 안내를 문장 속이 아닌 별도 배지+줄로 분리
-    if(retro[name]){
+    // 노드는 북쪽(나아갈 방향)과 정반대인 남쪽(익숙한 습관) 위치도 함께 보여줌
+    if(isNode){
+      var southLon = norm360(lon+180);
+      var southHouse = houseOfLongitude(southLon, cusps);
+      var southSign = signOf(southLon);
+      html += "<div class='subLine'>노드는 '이렇게 나아가면 좋다(북쪽)'와 '이미 익숙해서 편한 습관(남쪽)'을 동시에 보여주는 가상의 점이에요."
+        + " 북쪽은 위에서 본 '"+HOUSE_THEME[house-1]+"' 쪽이고, 남쪽은 정반대인 "+southSign+" · "+southHouse+"번째 하우스('"+HOUSE_THEME[southHouse-1]+"')예요."
+        + " 그동안 편하게 머물렀던 영역이니, 안주하지 말고 북쪽 방향으로 나아가 보라는 뜻으로 읽으면 됩니다.</div>";
+    }
+
+    // 역행 중이면 별도 줄로 안내(노드는 '항상 역행'이 구조적 특성이라 배지로만 표시)
+    if(!isNode && retro[name]){
       html += "<div class='retroNote'>↺ 역행 중이라, 겉으로 드러나기보다 재점검·재정비·복습의 방향으로 흐를 가능성이 큽니다.</div>";
     }
     html += "</div>";
@@ -971,8 +983,7 @@ function conclusionHtml(opts){
 
 function natalCompareHtml(opts){
   var natalAsc=opts.natalAsc, srAsc=opts.srAsc, natalSun=opts.natalSun, srSun=opts.srSun,
-      natalMoon=opts.natalMoon, srMoon=opts.srMoon, srPlanets=opts.srPlanets, order=opts.order,
-      natalCusps=opts.natalCusps;
+      natalMoon=opts.natalMoon, srMoon=opts.srMoon;
 
   var natalAscSign=signOf(natalAsc), srAscSign=signOf(srAsc);
   var natalSunSign=signOf(natalSun), srSunSign=signOf(srSun);
@@ -999,35 +1010,8 @@ function natalCompareHtml(opts){
     html += "<div class='pillar'><b>겉으로 드러나는 인상이 평소와 달라져요</b> <span class='pillarMeta'>(상승궁: 원국 "+natalAscSign+" → 올해 "+srAscSign+")</span><br>원래 타고난 바탕은 "+natalAscSign+"라 "+SIGN_TRAIT[natalAscSign]+" 분위기인데, 올해는 그 위에 "+srAscSign+" 색깔이 덧입혀져요. 예를 들어 "+ASC_IMPRESSION_EX[srAscSign]+"</div>";
   }
 
-  // 5. 어스펙트 섹션과의 관계 설명
-  html += "<div class='subhead'>올해 천체가 원국의 어느 영역에 들어와 있나<span class='desc'>어스펙트가 '각도로 보는 관계'라면, 여기는 '올해 천체들이 내 삶의 어느 영역(하우스)에 들어와 있는지'를 보는 관점입니다.</span></div>";
-
-  // 4. 하우스별 그룹 — 천체가 몰린(스텔리움) 순서로 정렬 + 강조 배지
-  var srInNatalHouse = order.map(function(name){
-    var house = houseOfLongitude(srPlanets[name], natalCusps);
-    return {name:name, house:house};
-  });
-  var byNatalHouse = {};
-  srInNatalHouse.forEach(function(x){
-    if(!byNatalHouse[x.house]) byNatalHouse[x.house]=[];
-    byNatalHouse[x.house].push(x.name);
-  });
-  var houseGroups = Object.keys(byNatalHouse).map(function(hStr){
-    return {house:+hStr, names:byNatalHouse[hStr]};
-  });
-  houseGroups.sort(function(a,b){ return b.names.length - a.names.length || a.house-b.house; });
-
-  houseGroups.forEach(function(g){
-    var isCluster = g.names.length >= 2;
-    var badge = isCluster ? " <span class='chip warn'>⭐ 가장 강하게 건드려지는 영역</span>" : "";
-    // 개인화: 이 하우스에 걸린 천체 중 대표(우선순위 1번째)의 행동방식을 반영해, 같은 하우스라도 어떤 천체가 걸렸는지에 따라 문장이 달라지게 한다
-    var leadPlanet = g.names[0];
-    var leadAction = PLANET_ACTION[leadPlanet] || "그 기운이 뚜렷하게 드러납니다";
-    var stelliumNote = isCluster ? " "+g.names.slice(1).join("·")+"까지 함께 겹쳐 있어 힘이 한층 더 몰려요." : "";
-    html += "<div class='pillar"+(isCluster?" key":"")+"'><b>"+HOUSE_THEME[g.house-1]+" 영역이 올해 유독 건드려져요</b>"+badge
-      + " <span class='pillarMeta'>("+g.names.join("·")+" → 원국 "+g.house+"번째 하우스)</span><br>"
-      + "예를 들어 "+HOUSE_EVENT_EX[g.house-1]+" 상황에서, "+leadPlanet+josaEun(leadPlanet)+" "+leadAction+". 원래도 내 삶의 중요한 축이었던 영역이라 그 영향이 유독 크게 느껴질 수 있어요."+stelliumNote+"</div>";
-  });
+  // 천체별로 원국의 어느 영역과 겹치는지(스텔리움 포함)는 아래 통합 섹션에서 각 카드마다 확인
+  html += "<div class='pillar'>천체 하나하나가 원국의 어느 영역과 겹치는지, 그리고 그 영향이 얼마나 강한지는 아래 <a href='#sec-narrative'>행성별 구체적 흐름</a>에서 각 카드마다 자세히 볼 수 있어요.</div>";
 
   return html;
 }
@@ -1039,94 +1023,7 @@ var OUTER_HEADLINE = {
   "명왕성":"근본적인 변화가 일어나는 부분",
   "노드":"인생의 방향과 관련된 부분"
 };
-/* 외행성·노드 구체적 예시 — 하우스 이벤트와 결합해 '예를 들어' 문장을 만드는 데 사용 */
-var OUTER_EXAMPLE = {
-  "천왕성":"뜻밖의 소식이나 갑작스러운 전환으로",
-  "해왕성":"현실감이 흐려지거나 영감이 떠오르는 방식으로",
-  "명왕성":"근본부터 뒤흔드는 강렬한 방식으로",
-  "노드":"삶의 방향을 다시 묻게 되는 계기로"
-};
 function josaEuro(word){ return (hasBatchim(word) && !hasRieulBatchim(word)) ? "으로" : "로"; }
-function outerPlanetsHtml(opts){
-  var outerPlanets=opts.outerPlanets, cusps=opts.cusps, retro=opts.retro||{},
-      fullPlanets=opts.fullPlanets, fullOrder=opts.fullOrder, natalPoints=opts.natalPoints,
-      baseYear=opts.baseYear, baseMonth=opts.baseMonth, natalCusps=opts.natalCusps;
-
-  // 이 넷도 이미 계산돼 있는 어스펙트(among/cross) 목록에서, 각 천체가 맺은 가장 강한(오브가 작은) 각도를 찾는다
-  var among = aspectsAmong(fullPlanets, fullOrder);
-  var cross = aspectsCross(fullPlanets, fullOrder, natalPoints);
-  function strongestAspectFor(name){
-    var candidates = among.filter(function(x){ return x.a===name || x.b===name; })
-      .map(function(x){ return {orb:x.asp.orb, aspName:x.asp.name, desc:x.asp.desc, partner:(x.a===name?x.b:x.a)}; })
-      .concat(cross.filter(function(x){ return x.sr===name; })
-        .map(function(x){ return {orb:x.asp.orb, aspName:x.asp.name, desc:x.asp.desc, partner:"원래의 "+x.natal}; }));
-    if(!candidates.length) return null;
-    candidates.sort(function(a,b){ return a.orb-b.orb; });
-    return candidates[0];
-  }
-
-  var names = ["천왕성","해왕성","명왕성","노드"];
-  var rows = "";
-  var notes = names.map(function(name){
-    var lon = outerPlanets[name];
-    var house = houseOfLongitude(lon, cusps);
-    var sign = signOf(lon);
-    var glyph = "<span class='glyph'>"+(PLANET_GLYPH[name]||"")+"</span>";
-    var rMark = retro[name] ? " <span class='retroBadge' title='역행 중 — 재점검·재정비의 시기'>↺ R</span>"
-      : (name==="노드" ? " <span class='chip neutral' title='노드는 항상 역행 방향으로만 움직이는 가상의 점입니다'>항상 역행</span>" : "");
-    rows += "<tr><td>"+glyph+name+rMark+"</td><td>"+sign+"</td><td>"+degInSign(lon)+"°</td><td>"+house+"</td></tr>";
-
-    var headline = OUTER_HEADLINE[name] || (name+"의 기운이 나타나는 부분");
-    var houseLabel = "("+glyph+name+(name==="노드"?" · 북쪽 ":" · ")+sign+" "+degInSign(lon)+"° · "+house+"번째 하우스)";
-    var exampleLine = "예를 들어 "+HOUSE_EVENT_EX[house-1]+" 상황이 "+OUTER_EXAMPLE[name]+" 다가올 수 있어요.";
-
-    // 4. 노드는 북쪽(나아갈 방향)뿐 아니라 정반대인 남쪽(익숙한 습관) 위치도 함께 계산해 대비를 보여줌 — 문장을 두 개로 쪼갬
-    var southNote = "";
-    if(name==="노드"){
-      var southLon = norm360(lon+180);
-      var southHouse = houseOfLongitude(southLon, cusps);
-      var southSign = signOf(southLon);
-      southNote = "노드는 '이렇게 나아가면 좋다(북쪽)'와 '이미 익숙해서 편한 습관(남쪽)'을 동시에 보여주는 가상의 점이에요."
-        + " 북쪽은 위에서 본 '"+HOUSE_THEME[house-1]+"' 쪽이고, 남쪽은 정반대인 "+southSign+" · "+southHouse+"번째 하우스('"+HOUSE_THEME[southHouse-1]+"')예요."
-        + " 그동안 편하게 머물렀던 영역이니, 안주하지 말고 북쪽 방향으로 나아가 보라는 뜻으로 읽으면 됩니다.";
-    }
-
-    // 그 SR 하우스가 대응하는 달(월별 흐름과 같은 매핑 방식)
-    var totalMonth = baseMonth-1+(house-1);
-    var year = baseYear + Math.floor(totalMonth/12);
-    var month = totalMonth%12+1;
-    var timingLink = "<a href='#sec-monthly'>"+year+"년 "+month+"월 무렵</a>";
-
-    // 주 문장(keyLine) — 처음 보는 사람도 바로 이해할 수 있는 구체적 상황 + 시기를 앞세운다
-    var strongest = strongestAspectFor(name);
-    var mainLine = strongest
-      ? exampleLine+" 특히 "+timingLink+" 이 기운이 도드라질 수 있어요."
-      : exampleLine+" "+timingLink+" 배경 기운으로 잔잔하게 작용해요.";
-
-    // 보조 문장(subLine) — 어스펙트 용어·천체명·오브 등 근거는 궁금한 사람만 보도록 뒤로
-    var reasonLine = strongest
-      ? "이번 해 "+name+josaEun(name)+" "+strongest.partner+josaWa(strongest.partner)+" "
-        + strongest.aspName+josaEuro(strongest.aspName)+" 이어져 있어서예요 ("+strongest.desc+" 흐름 · 오브 "+strongest.orb.toFixed(1)+"°, <a href='#sec-aspects'>어스펙트에서 확인</a>)."
-      : "이번 해 "+name+josaEun(name)+" 다른 천체와 뚜렷한 어스펙트를 맺지 않았어요.";
-
-    // 개인화: 원국에서도 이미 같은 영역에 있던 천체인지 비교 — 천왕성·해왕성·명왕성·노드는 워낙 느리게 움직여서, 같은 하우스인지 여부가 실제로 갈리는 정보다
-    if(natalCusps){
-      var natalHouseOuter = houseOfLongitude(lon, natalCusps);
-      reasonLine += (natalHouseOuter === house)
-        ? " 원국에서도 이미 같은 영역에 자리 잡고 있던 천체라, 그 기운이 오래전부터 누적돼 있어요."
-        : " 원국에서는 "+natalHouseOuter+"번째 하우스('"+HOUSE_THEME[natalHouseOuter-1]+"')에 있었는데, 올해는 이 영역으로 자리를 옮겨온 셈이에요.";
-    }
-
-    return "<div class='pillar'><b>"+headline+" — "+HOUSE_THEME[house-1]+"</b> <span class='pillarMeta'>"+houseLabel+"</span>"
-      + "<div class='keyLine'>"+mainLine+"</div>"
-      + "<div class='subLine'>"+reasonLine+"</div>"
-      + "<div class='subLine'>"+OUTER_MEANING[name]+"</div>"
-      + (southNote ? "<div class='subLine'>"+southNote+"</div>" : "")
-      + "</div>";
-  }).join("");
-
-  return "<table class='planets refTable'><thead><tr><th>천체</th><th>별자리</th><th>도수</th><th>하우스</th></tr></thead><tbody>"+rows+"</tbody></table>" + notes;
-}
 
 var ASPECT_LEGEND = [
   {name:"합", tag:"neutral", short:"0°", note:"두 힘이 하나로 합쳐짐"},
@@ -1142,18 +1039,6 @@ function aspectLegendHtml(){
   });
   html += "</div>";
   return html;
-}
-function aspectCardAmong(x, keyClass){
-  return "<div class='pillar"+keyClass+"'>"
-    + "<div class='keyLine'>"+x.asp.desc+" 흐름이에요 — "+x.a+josaEun(x.a)+" "+PLANET_ACTION[x.a]+", "+x.b+josaEun(x.b)+" "+PLANET_ACTION[x.b]+"</div>"
-    + "<div class='pillarMeta'>"+x.a+" · "+x.b+" <span class='chip "+x.asp.tag+"'>"+x.asp.name+"</span></div>"
-    + "</div>";
-}
-function aspectCardCross(x, keyClass){
-  return "<div class='pillar"+keyClass+"'>"
-    + "<div class='keyLine'>올해 들어온 "+x.sr+"의 기운이 원래부터 타고난 "+x.natal+" 자리를 직접 건드려요 — "+x.asp.desc+" 흐름이에요.</div>"
-    + "<div class='pillarMeta'>올해 "+x.sr+" · 원래 "+x.natal+" <span class='chip "+x.asp.tag+"'>"+x.asp.name+"</span></div>"
-    + "</div>";
 }
 function aspectLineAmong(x){
   return "<div class='aspectLine'><span class='alNames'>"+x.a+" · "+x.b+"</span>"
@@ -1179,15 +1064,11 @@ function aspectSummaryHtml(goodCount, hardCount, neutralCount){
 function renderAspectGroup(title, desc, icon, items){
   if(!items.length) return "";
   items.sort(function(p,q){return p.orb-q.orb;});
-  var strong = items.filter(function(i){return i.orb<2;});
-  var medium = items.filter(function(i){return i.orb>=2 && i.orb<5;});
+  var visible = items.filter(function(i){return i.orb<5;});
   var weak = items.filter(function(i){return i.orb>=5;});
 
   var html = "<div class='subhead'>"+icon+" "+title+"<span class='desc'>"+desc+"</span></div>";
-  strong.forEach(function(item){
-    html += item.kind==="among" ? aspectCardAmong(item.x, " key") : aspectCardCross(item.x, " key");
-  });
-  medium.forEach(function(item){
+  visible.forEach(function(item){
     html += item.kind==="among" ? aspectLineAmong(item.x) : aspectLineCross(item.x);
   });
   if(weak.length){
@@ -1204,7 +1085,8 @@ function aspectsHtml(srPlanets, order, natalPoints){
   var cross = aspectsCross(srPlanets, order, natalPoints);
 
   var intro = "<div class='pillar'>두 천체가 특정 각도로 만나면 그 힘이 서로 부딪히거나 도와줘요. "
-    + "이렇게 각도로 맺어지는 관계를 '어스펙트'라고 부르고, 각도가 정확할수록(오차가 작을수록, 이를 '오브'라고 해요) 영향이 더 뚜렷하게 나타난다고 봐요.</div>";
+    + "이렇게 각도로 맺어지는 관계를 '어스펙트'라고 부르고, 각도가 정확할수록(오차가 작을수록, 이를 '오브'라고 해요) 영향이 더 뚜렷하게 나타난다고 봐요. "
+    + "아래는 전체 조합을 한눈에 보는 표이고, 구체적인 해석은 <a href='#sec-narrative'>행성별 구체적 흐름</a>의 각 천체 카드에서 확인할 수 있어요.</div>";
 
   var all = among.map(function(x){ return {orb:x.asp.orb, kind:"among", tag:x.asp.tag, x:x}; })
     .concat(cross.map(function(x){ return {orb:x.asp.orb, kind:"cross", tag:x.asp.tag, x:x}; }));
@@ -1461,17 +1343,30 @@ function compute(){
   document.getElementById("mcInfo").innerHTML =
     "<div class='pillar'><b>일·사회생활에서 비치는 이미지 — "+mcSign+" 색깔</b> <span class='pillarMeta'>(중천점 · MC)</span><br>"+MC_IMAGE_EX[mcSign]+" "+mcCaveat+"</div>";
 
-  // planet table
+  // 어스펙트·행성별 흐름·월별 흐름에는 외행성·노드까지 포함해 더 개인화된 해석을 제공
+  var order = ["태양","달","수성","금성","화성","목성","토성"];
+  var fullOrder = order.concat(["천왕성","해왕성","명왕성","노드"]);
+  var fullPlanets = {};
+  order.forEach(function(n){ fullPlanets[n]=planets[n]; });
+  Object.keys(outerPlanets).forEach(function(n){ fullPlanets[n]=outerPlanets[n]; });
+  var fullRetro = {};
+  order.forEach(function(n){ fullRetro[n]=retro[n]; });
+  Object.keys(outerRetro).forEach(function(n){ fullRetro[n]=outerRetro[n]; });
+  var OUTER_NAMES = ["천왕성","해왕성","명왕성","노드"];
+
+  // planet table — 예전엔 외행성·노드가 별도 표에 있었는데, 하나로 합쳐서 한 번에 훑어볼 수 있게 했다
   var tbody = document.getElementById("planetTable");
   var rows = "";
-  var order = ["태양","달","수성","금성","화성","목성","토성"];
-  order.forEach(function(name){
-    var lon = planets[name];
+  fullOrder.forEach(function(name){
+    var lon = fullPlanets[name];
     var house = houseOfLongitude(lon, srCusps);
     var natalHouse = houseOfLongitude(lon, natalCusps);
-    var rMark = retro[name] ? " <span class='retroBadge' title='역행 중 — 재점검·재정비의 시기'>↺ R</span>" : "";
+    var isNode = name === "노드";
+    var rMark = isNode
+      ? " <span class='chip neutral' title='노드는 항상 역행 방향으로만 움직이는 가상의 점입니다'>항상 역행</span>"
+      : (fullRetro[name] ? " <span class='retroBadge' title='역행 중 — 재점검·재정비의 시기'>↺ R</span>" : "");
     var glyph = "<span class='glyph'>"+(PLANET_GLYPH[name]||"")+"</span>";
-    var rowClass = (name==="태양"||name==="달") ? " class='luminary'" : "";
+    var rowClass = (name==="태양"||name==="달") ? " class='luminary'" : (OUTER_NAMES.indexOf(name)>=0 ? " class='outerRow'" : "");
     var houseTitle = house+"번째 하우스 — "+HOUSE_THEME[house-1];
     var natalHouseTitle = natalHouse+"번째 하우스 — "+HOUSE_THEME[natalHouse-1];
     rows += "<tr"+rowClass+"><td>"+glyph+name+rMark+"</td><td>"+signOf(lon)+"</td><td>"+degInSign(lon)+"°</td>"
@@ -1485,31 +1380,18 @@ function compute(){
     baseYear: f.y, baseMonth: f.m, houseSystem: houseSystem, lCityName: lCity.name
   });
 
-  // 어스펙트·월별 흐름에는 외행성·노드까지 포함해 더 개인화된 해석을 제공
-  var fullOrder = order.concat(["천왕성","해왕성","명왕성","노드"]);
-  var fullPlanets = {};
-  order.forEach(function(n){ fullPlanets[n]=planets[n]; });
-  Object.keys(outerPlanets).forEach(function(n){ fullPlanets[n]=outerPlanets[n]; });
-
   document.getElementById("natalCompare").innerHTML = natalCompareHtml({
     natalAsc: natalAsc, srAsc: asc,
     natalSun: natalSun, srSun: sun.lon,
-    natalMoon: natalMoon, srMoon: moon,
-    srPlanets: planets, order: order, natalCusps: natalCusps
+    natalMoon: natalMoon, srMoon: moon
   });
   var natalPoints = {"태양":natalSun, "달":natalMoon, "상승궁":natalAsc};
   document.getElementById("aspects").innerHTML = aspectsHtml(fullPlanets, fullOrder, natalPoints);
   document.getElementById("planetNarrative").innerHTML = planetNarrativeHtml({
-    cusps: srCusps, planets: planets, order: order, retro: retro,
-    natalCusps: natalCusps, baseYear: f.y, baseMonth: f.m,
-    fullPlanets: fullPlanets, fullOrder: fullOrder, natalPoints: natalPoints
+    cusps: srCusps, planets: fullPlanets, order: fullOrder, retro: fullRetro,
+    natalCusps: natalCusps, baseYear: f.y, baseMonth: f.m, natalPoints: natalPoints
   });
   document.getElementById("monthlyFlow").innerHTML = monthlyFlowHtml(srCusps, fullPlanets, fullOrder, f.y, f.m);
-  document.getElementById("outerPlanets").innerHTML = outerPlanetsHtml({
-    outerPlanets: outerPlanets, cusps: srCusps, retro: outerRetro,
-    fullPlanets: fullPlanets, fullOrder: fullOrder, natalPoints: natalPoints,
-    baseYear: f.y, baseMonth: f.m, natalCusps: natalCusps
-  });
   document.getElementById("conclusion").innerHTML = conclusionHtml({
     ascSign: ascSign, sunHouse: sunHouse, moonSign: moonSign,
     retro: retro, cusps: srCusps, planets: planets, order: order,
