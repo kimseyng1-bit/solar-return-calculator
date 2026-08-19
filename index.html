@@ -91,6 +91,9 @@
   .summaryHeadline{font-size:15.5px; line-height:1.75; margin-bottom:12px;}
   .summaryHeadline b{color:var(--gold2);}
   .summaryMeta{font-size:11.5px; color:var(--sub); font-weight:400; margin-top:6px;}
+  .summaryDetail{font-size:13.5px; line-height:1.85; color:var(--text); margin:2px 0 14px; padding-top:12px; border-top:1px dashed var(--line);}
+  .summaryDetail b{color:var(--gold2);}
+  .summaryDetail a{color:var(--gold2); text-decoration:none; border-bottom:1px dotted var(--gold2);}
   .chipRow{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
   .chip{
     background:#150f36; border:1px solid var(--line); border-radius:20px;
@@ -964,17 +967,38 @@ function summaryHtml(opts){
     + "<div class='summaryMeta'>(상승궁 "+ascSign+" · 태양 "+sunHouse+"번째 하우스 · 달 "+moonSign+")</div>"
     + "</div>";
 
+  var picks = highlightPicks(cusps, planets, order);
+  var retroNames = Object.keys(retro).filter(function(n){return retro[n];});
+
+  var detail = "<div class='summaryDetail'>";
+  if(picks.length){
+    var top = picks[0];
+    var totalMonth = baseMonth-1+(top.house-1);
+    var topYear = baseYear + Math.floor(totalMonth/12);
+    var topMonth = totalMonth%12+1;
+    detail += "그중에서도 <b>"+topYear+"년 "+topMonth+"월</b> 즈음 "+HOUSE_THEME[top.house-1]+" 쪽에 유독 힘이 몰려요. 정확히 어떤 흐름인지는 아래 <a href='#sec-monthly'>월별 흐름</a>에서 확인할 수 있어요. ";
+  } else {
+    detail += "이번 해는 유독 튀는 시기 없이, 1년 내내 비교적 고르게 힘이 퍼져 있는 흐름이에요. ";
+  }
+  if(retroNames.length){
+    var retroJoined = retroNames.join("·");
+    var lastRetroName = retroNames[retroNames.length-1];
+    detail += "다만 "+retroJoined+josaI(lastRetroName)+" 역행 중이라, 해당 영역은 무리하게 밀어붙이기보다 재점검·재정비하는 태도가 더 잘 맞아요. ";
+  } else {
+    detail += "역행 중인 천체는 없어서, 전반적으로 앞으로 나아가기에 무난한 흐름이에요. ";
+  }
+  detail += "지금 달은 <b>"+moonPh.name+"</b>(조도 약 "+moonPh.illum+"%)로, "+moonPh.note+"이 도는 시기예요.";
+  detail += "</div>";
+
   var chips = "<div class='chipRow'>";
   chips += "<span class='chip'>📍"+lCityName+" 기준</span>";
   chips += "<span class='chip'>🏠 하우스 계산방식: "+(houseSystem==="placidus"?"플라시더스":"이퀄하우스")+"</span>";
   chips += "<span class='chip'>🌙 "+moonPh.name+" ("+moonPh.illum+"%)</span>";
 
-  var retroNames = Object.keys(retro).filter(function(n){return retro[n];});
   if(retroNames.length){
     chips += "<span class='chip warn'>↺ 역행: "+retroNames.join("·")+"</span>";
   }
 
-  var picks = highlightPicks(cusps, planets, order);
   if(picks.length){
     picks.slice(0,3).forEach(function(p){
       var totalMonth = baseMonth-1+(p.house-1);
@@ -985,7 +1009,7 @@ function summaryHtml(opts){
   }
   chips += "</div>";
 
-  return headline + chips;
+  return headline + detail + chips;
 }
 
 // 예전 '마무리 결론' 섹션의 역할을 흡수 — 위 요약 안에서 이미 다룬 내용(상승궁·역행·주목 시기 등)을 다시 말하지 않고
