@@ -772,7 +772,21 @@ function houseMapOf(cusps, planets, order){
 
 function planetNarrativeHtml(opts){
   var cusps=opts.cusps, planets=opts.planets, order=opts.order, retro=opts.retro||{},
-      natalCusps=opts.natalCusps, baseYear=opts.baseYear, baseMonth=opts.baseMonth;
+      natalCusps=opts.natalCusps, baseYear=opts.baseYear, baseMonth=opts.baseMonth,
+      fullPlanets=opts.fullPlanets, fullOrder=opts.fullOrder, natalPoints=opts.natalPoints;
+
+  // 개인화: 이 천체가 실제로 맺은 가장 강한 어스펙트를 찾아, 같은 하우스라도 사람마다 다르게 읽히게 한다
+  var amongForFlavor = aspectsAmong(fullPlanets, fullOrder);
+  var crossForFlavor = aspectsCross(fullPlanets, fullOrder, natalPoints);
+  function strongestAspectForFlavor(name){
+    var candidates = amongForFlavor.filter(function(x){ return x.a===name || x.b===name; })
+      .map(function(x){ return {orb:x.asp.orb, aspName:x.asp.name, partner:(x.a===name?x.b:x.a)}; })
+      .concat(crossForFlavor.filter(function(x){ return x.sr===name; })
+        .map(function(x){ return {orb:x.asp.orb, aspName:x.asp.name, partner:"원래의 "+x.natal}; }));
+    if(!candidates.length) return null;
+    candidates.sort(function(a,b){ return a.orb-b.orb; });
+    return candidates[0];
+  }
 
   // 6. 원국 대비 비교의 스텔리움(2개 이상 집중) 판정과 동일한 방식으로 교차 참조 여부 계산
   var natalHouseCount = {};
@@ -802,6 +816,20 @@ function planetNarrativeHtml(opts){
     // 6. 원국 대비 비교 섹션과의 교차 참조
     var crossRef = isCluster ? " 위 <a href='#sec-natal'>원국 대비 비교</a>에서 강조된 영역과 같은 자리이기도 합니다." : "";
 
+    // 개인화: 어스펙트 강도(있는지·강한지) × 원국과 같은 하우스인지 여부를 하나의 문장으로 결합
+    var strongestFlavor = strongestAspectForFlavor(name);
+    var sameHouseAsNatal = (house === natalHouse);
+    var flavor;
+    if(strongestFlavor && !sameHouseAsNatal){
+      flavor = "평소(원국)엔 힘이 약하던 영역인데 "+strongestFlavor.partner+josaWa(strongestFlavor.partner)+" "+strongestFlavor.aspName+josaEuro(strongestFlavor.aspName)+" 이어져 있어 올해 유독 강하게 드러나요.";
+    } else if(strongestFlavor){
+      flavor = "원래도 익숙한 영역인 데다 "+strongestFlavor.partner+josaWa(strongestFlavor.partner)+" "+strongestFlavor.aspName+"까지 겹쳐 있어 뚜렷하게 드러나요.";
+    } else if(!sameHouseAsNatal){
+      flavor = "평소(원국)엔 힘이 약하던 영역이라, 올해 유독 낯설게 느껴질 수 있어요.";
+    } else {
+      flavor = "원래도 익숙한 영역이라 무리 없이 자연스럽게 흘러가요.";
+    }
+
     var cardClass = "pillar" + (isLuminary ? " key" : "");
     var headline = PLANET_HEADLINE[name] || (name+"의 기운이 나타나는 부분");
 
@@ -813,7 +841,7 @@ function planetNarrativeHtml(opts){
           var tplFn = PLANET_KEYLINE_TEMPLATE[name];
           return tplFn ? tplFn(sign, SIGN_TRAIT[sign], PLANET_ACTION[name]) : sign+"다운 "+SIGN_TRAIT[sign]+" "+name+josaI(name)+" "+PLANET_ACTION[name];
         })()+"</div>"
-      + "<div class='subLine'>예를 들어 "+HOUSE_EVENT_EX[house-1]+" 상황에서 이 기운이 힘을 발휘해요. 정확한 시기는 <a href='#sec-monthly'>"+year+"년 "+month+"월경 월별 흐름</a>에서 볼 수 있습니다."+crossRef+"</div>";
+      + "<div class='subLine'>예를 들어 "+HOUSE_EVENT_EX[house-1]+" 상황에서 힘을 발휘해요. "+flavor+" 정확한 시기는 <a href='#sec-monthly'>"+year+"년 "+month+"월경 월별 흐름</a>에서 볼 수 있습니다."+crossRef+"</div>";
 
     // 5. 역행 안내를 문장 속이 아닌 별도 배지+줄로 분리
     if(retro[name]){
@@ -992,9 +1020,13 @@ function natalCompareHtml(opts){
   houseGroups.forEach(function(g){
     var isCluster = g.names.length >= 2;
     var badge = isCluster ? " <span class='chip warn'>⭐ 가장 강하게 건드려지는 영역</span>" : "";
+    // 개인화: 이 하우스에 걸린 천체 중 대표(우선순위 1번째)의 행동방식을 반영해, 같은 하우스라도 어떤 천체가 걸렸는지에 따라 문장이 달라지게 한다
+    var leadPlanet = g.names[0];
+    var leadAction = PLANET_ACTION[leadPlanet] || "그 기운이 뚜렷하게 드러납니다";
+    var stelliumNote = isCluster ? " "+g.names.slice(1).join("·")+"까지 함께 겹쳐 있어 힘이 한층 더 몰려요." : "";
     html += "<div class='pillar"+(isCluster?" key":"")+"'><b>"+HOUSE_THEME[g.house-1]+" 영역이 올해 유독 건드려져요</b>"+badge
       + " <span class='pillarMeta'>("+g.names.join("·")+" → 원국 "+g.house+"번째 하우스)</span><br>"
-      + "예를 들어 "+HOUSE_EVENT_EX[g.house-1]+" 상황이, 원래도 내 삶의 중요한 축이었던 이 영역에서 유독 두드러지게 나타날 수 있습니다.</div>";
+      + "예를 들어 "+HOUSE_EVENT_EX[g.house-1]+" 상황에서, "+leadPlanet+josaEun(leadPlanet)+" "+leadAction+". 원래도 내 삶의 중요한 축이었던 영역이라 그 영향이 유독 크게 느껴질 수 있어요."+stelliumNote+"</div>";
   });
 
   return html;
@@ -1018,7 +1050,7 @@ function josaEuro(word){ return (hasBatchim(word) && !hasRieulBatchim(word)) ? "
 function outerPlanetsHtml(opts){
   var outerPlanets=opts.outerPlanets, cusps=opts.cusps, retro=opts.retro||{},
       fullPlanets=opts.fullPlanets, fullOrder=opts.fullOrder, natalPoints=opts.natalPoints,
-      baseYear=opts.baseYear, baseMonth=opts.baseMonth;
+      baseYear=opts.baseYear, baseMonth=opts.baseMonth, natalCusps=opts.natalCusps;
 
   // 이 넷도 이미 계산돼 있는 어스펙트(among/cross) 목록에서, 각 천체가 맺은 가장 강한(오브가 작은) 각도를 찾는다
   var among = aspectsAmong(fullPlanets, fullOrder);
@@ -1076,6 +1108,14 @@ function outerPlanetsHtml(opts){
       ? "이번 해 "+name+josaEun(name)+" "+strongest.partner+josaWa(strongest.partner)+" "
         + strongest.aspName+josaEuro(strongest.aspName)+" 이어져 있어서예요 ("+strongest.desc+" 흐름 · 오브 "+strongest.orb.toFixed(1)+"°, <a href='#sec-aspects'>어스펙트에서 확인</a>)."
       : "이번 해 "+name+josaEun(name)+" 다른 천체와 뚜렷한 어스펙트를 맺지 않았어요.";
+
+    // 개인화: 원국에서도 이미 같은 영역에 있던 천체인지 비교 — 천왕성·해왕성·명왕성·노드는 워낙 느리게 움직여서, 같은 하우스인지 여부가 실제로 갈리는 정보다
+    if(natalCusps){
+      var natalHouseOuter = houseOfLongitude(lon, natalCusps);
+      reasonLine += (natalHouseOuter === house)
+        ? " 원국에서도 이미 같은 영역에 자리 잡고 있던 천체라, 그 기운이 오래전부터 누적돼 있어요."
+        : " 원국에서는 "+natalHouseOuter+"번째 하우스('"+HOUSE_THEME[natalHouseOuter-1]+"')에 있었는데, 올해는 이 영역으로 자리를 옮겨온 셈이에요.";
+    }
 
     return "<div class='pillar'><b>"+headline+" — "+HOUSE_THEME[house-1]+"</b> <span class='pillarMeta'>"+houseLabel+"</span>"
       + "<div class='keyLine'>"+mainLine+"</div>"
@@ -1405,7 +1445,12 @@ function compute(){
   var moonSign = signOf(moon);
   var pillarsHtml = "";
   pillarsHtml += "<div class='pillar'><b>남들에게 비치는 첫인상 — "+ascSign+" 분위기</b> <span class='pillarMeta'>(상승궁 · Ascendant)</span><br>이건 흔히 아는 '내 별자리'(태양궁)와는 다른 개념으로, 처음 만난 사람이 느끼는 인상을 보여줘요. "+ASC_IMPRESSION_EX[ascSign]+"</div>";
-  pillarsHtml += "<div class='pillar'><b>올해 가장 마음이 쏠리는 영역 — "+HOUSE_THEME[sunHouse-1]+"</b> <span class='pillarMeta'>(태양의 위치 · "+sunHouse+"번째 하우스)</span><br>예를 들어 "+HOUSE_EVENT_EX[sunHouse-1]+" 흐름 속에서, 평소보다 적극적으로 나서고 싶어지고 존재감을 드러내고 싶어지는 한 해입니다.</div>";
+  // 개인화: 태어날 때도 태양이 있던 영역인지 비교 — 같은 영역이면 원래 관심사가 이어지는 것이고, 다른 영역이면 올해 새롭게 부각되는 것이라 의미가 달라진다
+  var natalSunHouse = houseOfLongitude(natalSun, natalCusps);
+  var sunNatalFlavor = (natalSunHouse === sunHouse)
+    ? " 참고로 태어날 때도 같은 영역에 태양이 있었으니, 원래부터 관심 있던 영역이 이번 해에 더 도드라지는 셈이에요."
+    : " 참고로 태어날 때는 "+natalSunHouse+"번째 하우스('"+HOUSE_THEME[natalSunHouse-1]+"')에 태양이 있었으니, 평소와는 다른 영역에 힘이 쏠리는 해예요.";
+  pillarsHtml += "<div class='pillar'><b>올해 가장 마음이 쏠리는 영역 — "+HOUSE_THEME[sunHouse-1]+"</b> <span class='pillarMeta'>(태양의 위치 · "+sunHouse+"번째 하우스)</span><br>예를 들어 "+HOUSE_EVENT_EX[sunHouse-1]+" 흐름 속에서, 평소보다 적극적으로 나서고 싶어지고 존재감을 드러내고 싶어지는 한 해입니다."+sunNatalFlavor+"</div>";
   pillarsHtml += "<div class='pillar'><b>마음이 편안해지는 방식 — "+moonSign+" 리듬</b> <span class='pillarMeta'>(달의 위치)</span><br>"+MOON_COMFORT_EX[moonSign]+"</div>";
   document.getElementById("pillars").innerHTML = pillarsHtml;
 
@@ -1456,13 +1501,14 @@ function compute(){
   document.getElementById("aspects").innerHTML = aspectsHtml(fullPlanets, fullOrder, natalPoints);
   document.getElementById("planetNarrative").innerHTML = planetNarrativeHtml({
     cusps: srCusps, planets: planets, order: order, retro: retro,
-    natalCusps: natalCusps, baseYear: f.y, baseMonth: f.m
+    natalCusps: natalCusps, baseYear: f.y, baseMonth: f.m,
+    fullPlanets: fullPlanets, fullOrder: fullOrder, natalPoints: natalPoints
   });
   document.getElementById("monthlyFlow").innerHTML = monthlyFlowHtml(srCusps, fullPlanets, fullOrder, f.y, f.m);
   document.getElementById("outerPlanets").innerHTML = outerPlanetsHtml({
     outerPlanets: outerPlanets, cusps: srCusps, retro: outerRetro,
     fullPlanets: fullPlanets, fullOrder: fullOrder, natalPoints: natalPoints,
-    baseYear: f.y, baseMonth: f.m
+    baseYear: f.y, baseMonth: f.m, natalCusps: natalCusps
   });
   document.getElementById("conclusion").innerHTML = conclusionHtml({
     ascSign: ascSign, sunHouse: sunHouse, moonSign: moonSign,
