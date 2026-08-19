@@ -955,14 +955,19 @@ function highlightPicks(cusps, planets, order){
   return picks;
 }
 
+function isLeapYear(y){ return (y%4===0 && y%100!==0) || y%400===0; }
+
 function summaryHtml(opts){
   var ascSign=opts.ascSign, sunHouse=opts.sunHouse, moonSign=opts.moonSign,
       moonPh=opts.moonPh, retro=opts.retro, cusps=opts.cusps, planets=opts.planets,
-      order=opts.order, baseYear=opts.baseYear, baseMonth=opts.baseMonth,
+      order=opts.order, baseYear=opts.baseYear, baseMonth=opts.baseMonth, baseDay=opts.baseDay,
       houseSystem=opts.houseSystem, lCityName=opts.lCityName;
 
+  var endYear = baseYear+1, endMonth = baseMonth, endDay = baseDay;
+  if(endMonth===2 && endDay===29 && !isLeapYear(endYear)) endDay = 28; // 윤년 2/29 → 다음해엔 날짜 없음 보정
+
   var headline = "<div class='summaryHeadline'>"
-    + "<b>"+baseYear+"년 "+baseMonth+"월</b>부터 1년의 흐름이 시작돼요.<br>"
+    + "<b>"+baseYear+"년 "+baseMonth+"월 "+baseDay+"일</b>부터 <b>"+endYear+"년 "+endMonth+"월 "+endDay+"일</b>까지, 1년간의 사주 흐름이에요.<br>"
     + "겉으로 드러나는 인상은 <b>"+ascSign+"</b> 분위기로 "+SIGN_TRAIT[ascSign]+", "
     + "마음이 가장 쏠리는 영역은 <b>"+HOUSE_THEME[sunHouse-1]+"</b>이고, "
     + "감정이 편안해지는 리듬은 <b>"+moonSign+"</b>라 "+SIGN_TRAIT[moonSign]+" 편이에요."
@@ -1416,7 +1421,7 @@ function compute(){
   document.getElementById("summary").innerHTML = summaryHtml({
     ascSign: ascSign, sunHouse: sunHouse, moonSign: moonSign, moonPh: moonPh,
     retro: retro, cusps: srCusps, planets: planets, order: order,
-    baseYear: f.y, baseMonth: f.m, houseSystem: houseSystem, lCityName: lCity.name
+    baseYear: f.y, baseMonth: f.m, baseDay: f.d, houseSystem: houseSystem, lCityName: lCity.name
   });
 
   document.getElementById("natalCompare").innerHTML = natalCompareHtml({
