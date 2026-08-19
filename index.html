@@ -295,30 +295,25 @@
     <div class="guideBox">
       <div class="gTitle">🧭 이 결과, 이렇게 읽어보세요</div>
       <ol>
-        <li>먼저 아래 <b>'한눈에 보기'</b>로 올해 전체 분위기를 한 번에 파악하세요.</li>
-        <li>궁금한 부분만 골라 아래 상세 섹션을 읽어도 충분합니다 (처음부터 다 읽지 않아도 돼요).</li>
+        <li>먼저 <b>'사주 전체 요약'</b>으로 올해 전체 분위기와 원국 대비 달라지는 점을 한 번에 파악하세요.</li>
+        <li><b>'조금 더 신경 쓰면 좋은 부분'</b>과 <b>'두드러지는 점'</b>은 궁금한 부분만 골라 읽어도 충분합니다.</li>
         <li><b>'월별 흐름'</b>은 실제 달력처럼 그때그때 다시 돌아와 참고하면 좋습니다.</li>
-        <li>마지막 <b>'마무리 결론'</b>에서 전체를 한 문단으로 다시 정리해 드립니다.</li>
       </ol>
       <div class="tocLinks">
-        <a href="#sec-summary">한눈에 보기</a>
-        <a href="#sec-wheel">차트 휠</a>
-        <a href="#sec-planets">행성 배치</a>
-        <a href="#sec-natal">원국 비교</a>
-        <a href="#sec-aspects">어스펙트</a>
-        <a href="#sec-narrative">행성별 흐름</a>
+        <a href="#sec-summary">사주 전체 요약</a>
+        <a href="#sec-caution">조금 더 신경 쓰면 좋은 부분</a>
+        <a href="#sec-standout">두드러지는 점</a>
         <a href="#sec-monthly">월별 흐름</a>
-        <a href="#sec-conclusion">마무리 결론</a>
       </div>
     </div>
 
     <div class="summaryCard" id="sec-summary">
-      <h2>✦ 한눈에 보기</h2>
+      <h2>✦ 사주 전체 요약</h2>
       <div id="summary"></div>
     </div>
 
     <div class="card">
-      <div class="resultHead" id="sec-wheel">
+      <div class="resultHead">
         <div style="color:var(--sub);font-size:13px;">태양 회귀(솔라리턴) 정확한 순간</div>
         <div class="dt" id="returnMoment">-</div>
         <div class="dt" id="moonPhase" style="font-size:12.5px;color:var(--sub);margin-top:2px;">-</div>
@@ -334,33 +329,37 @@
       <div class="pillars" id="pillars"></div>
       <div class="pillars" id="mcInfo"></div>
 
-      <h2 style="margin-top:22px;" id="sec-planets">행성 배치 (R = 역행)</h2>
-      <div class="tableCaption">아래는 앞서 설명한 내용을 숫자로 요약한 빠른 참조표입니다(천왕성·해왕성·명왕성·노드는 워낙 느리게 움직여 표의 별자리·하우스 값 자체는 큰 의미가 없어 옅게 표시했어요). 자세한 해석은 아래 <a href="#sec-narrative">행성별 구체적 흐름</a>을 참고하세요.</div>
-      <table class="planets">
-        <thead><tr><th>천체</th><th>별자리</th><th>도수</th><th>SR 하우스</th><th>원국 하우스</th></tr></thead>
-        <tbody id="planetTable"></tbody>
-      </table>
-      <div class="tableFootnote">※ 원국 하우스 값에 대한 해석은 아래 <a href="#sec-narrative">행성별 구체적 흐름</a>에서 천체마다 확인할 수 있습니다.</div>
-
-      <h2 style="margin-top:22px;" id="sec-natal">원국(태어난 순간) 대비 비교</h2>
       <div class="pillars" id="natalCompare"></div>
 
-      <h2 style="margin-top:22px;" id="sec-aspects">행성 간 각도 관계 (어스펙트)</h2>
-      <div class="pillars" id="aspects"></div>
+      <details class="weakAspects" style="margin-top:16px;">
+        <summary>행성 배치 · 어스펙트 참고표 보기 (R = 역행)</summary>
+        <div class="tableCaption" style="margin-top:8px;">천왕성·해왕성·명왕성·노드는 워낙 느리게 움직여 표의 별자리·하우스 값 자체는 큰 의미가 없어 옅게 표시했어요.</div>
+        <table class="planets" style="margin-top:6px;">
+          <thead><tr><th>천체</th><th>별자리</th><th>도수</th><th>SR 하우스</th><th>원국 하우스</th></tr></thead>
+          <tbody id="planetTable"></tbody>
+        </table>
+        <div class="pillars" id="aspects" style="margin-top:10px;"></div>
+      </details>
 
-      <h2 style="margin-top:22px;" id="sec-narrative">행성별 구체적 흐름</h2>
-      <div class="pillars" id="planetNarrative"></div>
+      <div id="summaryClose" style="margin-top:16px;"></div>
+    </div>
 
-      <h2 style="margin-top:22px;" id="sec-monthly">월별 흐름 (하우스 기준 12개월)</h2>
+    <div class="card">
+      <h2 id="sec-caution">조금 더 신경 쓰면 좋은 부분</h2>
+      <div class="pillars" id="caution"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="sec-standout">두드러지는 점</h2>
+      <div class="pillars" id="standout"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="sec-monthly">월별 흐름 (하우스 기준 12개월)</h2>
       <div class="premiseNote">
         솔라리턴 차트의 <b>1번째 하우스</b>(상승궁이 있는 자리)를 이번 회귀월로 놓고, 2번째 하우스는 다음 달, 3번째 하우스는 그다음 달… 이런 식으로 하우스 순서를 12개월에 그대로 대응시킨 방식입니다. 즉 아래 카드 순서가 곧 시간 순서입니다. <span class="chip good">⭐ 주목 시기</span> 배지가 붙은 달은 한 해 중 특히 힘이 몰리는 시기예요.
       </div>
       <div class="pillars" id="monthlyFlow"></div>
-
-      <div class="conclusion" id="sec-conclusion">
-        <h2>✦ 마무리 결론</h2>
-        <div id="conclusion"></div>
-      </div>
     </div>
   </div>
 
@@ -765,7 +764,15 @@ function houseMapOf(cusps, planets, order){
   return map;
 }
 
-function planetNarrativeHtml(opts){
+/* '조금 더 신경 쓰면 좋은 부분' / '두드러지는 점' 분류에 쓰는 밸런스 규칙 —
+   길성(금성·목성)·흉성(화성·토성·천왕성·명왕성)이라는 전통적 구분과, 확장형/긴장형 하우스 성격을 함께 반영해
+   같은 '합' 어스펙트라도 어떤 천체·어느 하우스에 걸렸는지에 따라 다르게 분류되도록 한다 */
+var BENEFIC_PLANETS = ["금성","목성"];
+var MALEFIC_PLANETS = ["화성","토성","천왕성","명왕성"];
+var GROWTH_HOUSES = [2,5,9,11];
+var CHALLENGE_HOUSES = [6,8,12];
+
+function buildPlanetCards(opts){
   var cusps=opts.cusps, planets=opts.planets, order=opts.order, retro=opts.retro||{},
       natalCusps=opts.natalCusps, baseYear=opts.baseYear, baseMonth=opts.baseMonth,
       natalPoints=opts.natalPoints;
@@ -775,9 +782,9 @@ function planetNarrativeHtml(opts){
   var cross = aspectsCross(planets, order, natalPoints);
   function strongestAspectFor(name){
     var candidates = among.filter(function(x){ return x.a===name || x.b===name; })
-      .map(function(x){ return {orb:x.asp.orb, aspName:x.asp.name, partner:(x.a===name?x.b:x.a)}; })
+      .map(function(x){ var partnerRaw=(x.a===name?x.b:x.a); return {orb:x.asp.orb, aspName:x.asp.name, tag:x.asp.tag, partner:partnerRaw, partnerRaw:partnerRaw}; })
       .concat(cross.filter(function(x){ return x.sr===name; })
-        .map(function(x){ return {orb:x.asp.orb, aspName:x.asp.name, partner:"원래의 "+x.natal}; }));
+        .map(function(x){ return {orb:x.asp.orb, aspName:x.asp.name, tag:x.asp.tag, partner:"원래의 "+x.natal, partnerRaw:x.natal}; }));
     if(!candidates.length) return null;
     candidates.sort(function(a,b){ return a.orb-b.orb; });
     return candidates[0];
@@ -791,7 +798,7 @@ function planetNarrativeHtml(opts){
     natalHouseMembers[h].push(name);
   });
 
-  var html = "";
+  var cards = [];
   order.forEach(function(name){
     var lon = planets[name];
     var house = houseOfLongitude(lon, cusps);
@@ -835,7 +842,7 @@ function planetNarrativeHtml(opts){
     var cardClass = "pillar" + (isLuminary ? " key" : "");
     var headline = PLANET_HEADLINE[name] || OUTER_HEADLINE[name] || (name+"의 기운이 나타나는 부분");
 
-    html += "<div class='"+cardClass+"'>"
+    var cardHtml = "<div class='"+cardClass+"'>"
       + "<b>"+headline+" — "+HOUSE_THEME[house-1]+"</b>"+retroBadge+luminaryBadge+clusterBadge
       + " <span class='pillarMeta'>("+glyph+name+" · "+sign+" "+degInSign(lon)+"° · "+house+"번째 하우스)</span>"
       + "<div class='keyLine'>"+(function(){
@@ -850,18 +857,48 @@ function planetNarrativeHtml(opts){
       var southLon = norm360(lon+180);
       var southHouse = houseOfLongitude(southLon, cusps);
       var southSign = signOf(southLon);
-      html += "<div class='subLine'>노드는 '이렇게 나아가면 좋다(북쪽)'와 '이미 익숙해서 편한 습관(남쪽)'을 동시에 보여주는 가상의 점이에요."
+      cardHtml += "<div class='subLine'>노드는 '이렇게 나아가면 좋다(북쪽)'와 '이미 익숙해서 편한 습관(남쪽)'을 동시에 보여주는 가상의 점이에요."
         + " 북쪽은 위에서 본 '"+HOUSE_THEME[house-1]+"' 쪽이고, 남쪽은 정반대인 "+southSign+" · "+southHouse+"번째 하우스('"+HOUSE_THEME[southHouse-1]+"')예요."
         + " 그동안 편하게 머물렀던 영역이니, 안주하지 말고 북쪽 방향으로 나아가 보라는 뜻으로 읽으면 됩니다.</div>";
     }
 
     // 역행 중이면 별도 줄로 안내(노드는 '항상 역행'이 구조적 특성이라 배지로만 표시)
     if(!isNode && retro[name]){
-      html += "<div class='retroNote'>↺ 역행 중이라, 겉으로 드러나기보다 재점검·재정비·복습의 방향으로 흐를 가능성이 큽니다.</div>";
+      cardHtml += "<div class='retroNote'>↺ 역행 중이라, 겉으로 드러나기보다 재점검·재정비·복습의 방향으로 흐를 가능성이 큽니다.</div>";
     }
-    html += "</div>";
+    cardHtml += "</div>";
+
+    // 개인화: '조금 더 신경 쓰면 좋은 부분' / '두드러지는 점' 분류용 밸런스 점수
+    // 1) 어스펙트 성격(좋음/마찰/합) 2) 합일 때는 천체 자체의 전통적 성향(길성·흉성) 3) 하우스 성격(확장형·긴장형) 4) 역행 여부
+    var score = 0;
+    if(strongest){
+      if(strongest.tag==="good") score += 1;
+      else if(strongest.tag==="hard") score -= 1;
+      else if(strongest.tag==="neutral"){
+        if(BENEFIC_PLANETS.indexOf(strongest.partnerRaw)>=0) score += 1;
+        else if(MALEFIC_PLANETS.indexOf(strongest.partnerRaw)>=0) score -= 1;
+      }
+    } else {
+      if(BENEFIC_PLANETS.indexOf(name)>=0) score += 1;
+      else if(MALEFIC_PLANETS.indexOf(name)>=0) score -= 1;
+    }
+    if(GROWTH_HOUSES.indexOf(house)>=0) score += 1;
+    else if(CHALLENGE_HOUSES.indexOf(house)>=0) score -= 1;
+    if(!isNode && retro[name]) score -= 1;
+
+    cards.push({name:name, house:house, score:score, html:cardHtml});
   });
-  return html;
+  return cards;
+}
+function standoutHtml(cards){
+  var picks = cards.filter(function(c){ return c.score>=0; }).sort(function(a,b){ return b.score-a.score; });
+  if(!picks.length) return "<div class='pillar'>이번 해는 유독 튀는 부분 없이, 여러 영역에 고르게 힘이 퍼져 있는 흐름이에요.</div>";
+  return picks.map(function(c){ return c.html; }).join("");
+}
+function cautionHtml(cards){
+  var picks = cards.filter(function(c){ return c.score<0; }).sort(function(a,b){ return a.score-b.score; });
+  if(!picks.length) return "<div class='pillar'>이번 해는 특별히 신경 쓸 마찰 없이 무난하게 흘러가는 흐름이에요.</div>";
+  return picks.map(function(c){ return c.html; }).join("");
 }
 
 function monthlyFlowHtml(cusps, planets, order, baseYear, baseMonth){
@@ -951,34 +988,10 @@ function summaryHtml(opts){
   return headline + chips;
 }
 
-function conclusionHtml(opts){
-  var ascSign=opts.ascSign, sunHouse=opts.sunHouse, moonSign=opts.moonSign,
-      retro=opts.retro, cusps=opts.cusps, planets=opts.planets, order=opts.order,
-      baseYear=opts.baseYear, baseMonth=opts.baseMonth, natalAscSign=opts.natalAscSign;
-
-  var picks = highlightPicks(cusps, planets, order);
-  var retroNames = Object.keys(retro).filter(function(n){return retro[n];});
-
-  // 위 '한눈에 보기'에서 이미 상승궁·태양·달 요약을 전달했으므로, 여기서는 그 문장을 그대로 반복하지 않고
-  // 원국 대비 어떤 의미인지(위에 없던 정보)만 짧게 짚고 위 요약으로 링크한다
-  var p1 = "<p>정리하면, <a href='#sec-summary'>위 한눈에 보기</a>에서 짚은 이번 해 분위기 위에 원래 타고난 <b>"+natalAscSign+"</b>의 바탕이 깔려 있다고 생각하면 됩니다. 겉모습에는 "+ascSign+"의 색이 1년간 얹히는 셈이에요.</p>";
-
-  var p2part = "";
-  if(picks.length){
-    var top = picks[0];
-    var totalMonth = baseMonth-1+(top.house-1);
-    var year = baseYear + Math.floor(totalMonth/12);
-    var month = totalMonth%12+1;
-    p2part = "그중에서도 <a href='#sec-monthly'>"+year+"년 "+month+"월</a>이 가장 힘이 몰리는 시기이니 이때를 눈여겨보세요. ";
-  }
-  var retroPart = retroNames.length
-    ? "위에서 확인한 역행 천체들은 무리하게 밀어붙이기보다 재점검하는 태도가 더 어울립니다. "
-    : "이번 해엔 역행 중인 천체가 없어, 전반적으로 앞으로 나아가기에 무난한 흐름입니다. ";
-  var p2 = "<p>"+p2part+retroPart+"컨디션 관리는 위 '마음이 편안해지는 방식' 카드를 참고하세요.</p>";
-
-  var p3 = "<p>이 해석은 정해진 운명이 아니라 <b>'올해는 이런 방향으로 힘이 실린다'</b>는 참고 자료입니다. 위 '월별 흐름'을 달력 삼아 그 시기가 다가올 때마다 다시 들춰보면서, 실제 선택은 스스로 판단해 내리는 것을 추천합니다.</p>";
-
-  return p1 + p2 + p3;
+// 예전 '마무리 결론' 섹션의 역할을 흡수 — 위 요약 안에서 이미 다룬 내용(상승궁·역행·주목 시기 등)을 다시 말하지 않고
+// 두 새 섹션과 월별 흐름으로 안내만 하는 짧은 마무리 문단
+function summaryCloseHtml(){
+  return "<p>이 해석은 정해진 운명이 아니라 <b>'올해는 이런 방향으로 힘이 실린다'</b>는 참고 자료입니다. 구체적으로 어떤 천체가 그런 흐름을 만드는지는 아래 <a href='#sec-caution'>조금 더 신경 쓰면 좋은 부분</a>과 <a href='#sec-standout'>두드러지는 점</a>에서, 정확한 시기는 <a href='#sec-monthly'>월별 흐름</a>에서 확인해 보세요. 실제 선택은 스스로 판단해 내리는 것을 추천합니다.</p>";
 }
 
 function natalCompareHtml(opts){
@@ -1011,7 +1024,7 @@ function natalCompareHtml(opts){
   }
 
   // 천체별로 원국의 어느 영역과 겹치는지(스텔리움 포함)는 아래 통합 섹션에서 각 카드마다 확인
-  html += "<div class='pillar'>천체 하나하나가 원국의 어느 영역과 겹치는지, 그리고 그 영향이 얼마나 강한지는 아래 <a href='#sec-narrative'>행성별 구체적 흐름</a>에서 각 카드마다 자세히 볼 수 있어요.</div>";
+  html += "<div class='pillar'>천체 하나하나가 원국의 어느 영역과 겹치는지, 그리고 그 영향이 얼마나 강한지는 아래 <a href='#sec-caution'>조금 더 신경 쓰면 좋은 부분</a>과 <a href='#sec-standout'>두드러지는 점</a>에서 각 카드마다 자세히 볼 수 있어요.</div>";
 
   return html;
 }
@@ -1086,7 +1099,7 @@ function aspectsHtml(srPlanets, order, natalPoints){
 
   var intro = "<div class='pillar'>두 천체가 특정 각도로 만나면 그 힘이 서로 부딪히거나 도와줘요. "
     + "이렇게 각도로 맺어지는 관계를 '어스펙트'라고 부르고, 각도가 정확할수록(오차가 작을수록, 이를 '오브'라고 해요) 영향이 더 뚜렷하게 나타난다고 봐요. "
-    + "아래는 전체 조합을 한눈에 보는 표이고, 구체적인 해석은 <a href='#sec-narrative'>행성별 구체적 흐름</a>의 각 천체 카드에서 확인할 수 있어요.</div>";
+    + "아래는 전체 조합을 한눈에 보는 표이고, 구체적인 해석은 <a href='#sec-caution'>조금 더 신경 쓰면 좋은 부분</a>과 <a href='#sec-standout'>두드러지는 점</a>의 각 천체 카드에서 확인할 수 있어요.</div>";
 
   var all = among.map(function(x){ return {orb:x.asp.orb, kind:"among", tag:x.asp.tag, x:x}; })
     .concat(cross.map(function(x){ return {orb:x.asp.orb, kind:"cross", tag:x.asp.tag, x:x}; }));
@@ -1387,16 +1400,16 @@ function compute(){
   });
   var natalPoints = {"태양":natalSun, "달":natalMoon, "상승궁":natalAsc};
   document.getElementById("aspects").innerHTML = aspectsHtml(fullPlanets, fullOrder, natalPoints);
-  document.getElementById("planetNarrative").innerHTML = planetNarrativeHtml({
+
+  var planetCards = buildPlanetCards({
     cusps: srCusps, planets: fullPlanets, order: fullOrder, retro: fullRetro,
     natalCusps: natalCusps, baseYear: f.y, baseMonth: f.m, natalPoints: natalPoints
   });
+  document.getElementById("caution").innerHTML = cautionHtml(planetCards);
+  document.getElementById("standout").innerHTML = standoutHtml(planetCards);
+
   document.getElementById("monthlyFlow").innerHTML = monthlyFlowHtml(srCusps, fullPlanets, fullOrder, f.y, f.m);
-  document.getElementById("conclusion").innerHTML = conclusionHtml({
-    ascSign: ascSign, sunHouse: sunHouse, moonSign: moonSign,
-    retro: retro, cusps: srCusps, planets: planets, order: order,
-    baseYear: f.y, baseMonth: f.m, natalAscSign: signOf(natalAsc)
-  });
+  document.getElementById("summaryClose").innerHTML = summaryCloseHtml();
 
   drawWheel(srCusps, planets, order);
   document.getElementById("result").style.display="block";
