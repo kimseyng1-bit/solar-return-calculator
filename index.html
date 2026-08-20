@@ -787,11 +787,17 @@ var SIGN_RULER = {
 /* 태양이 활동궁(1·4·7·10)/안정궁(2·5·8·11)/종결궁(3·6·9·12) 중 어디 있는지로 그 해의 힘이
    초반·중반·후반 중 언제 실리는지를 가늠하는 전통 기법 */
 var ANGULAR_HOUSES = [1,4,7,10], SUCCEDENT_HOUSES = [2,5,8,11], CADENT_HOUSES = [3,6,9,12];
+/* 별자리 특성(모달리티) — 활동궁(시작)/고정궁(지속)/변동궁(적응) 중 천체들이 어디로 쏠려 있는지로
+   그 해에 어떤 태도로 움직이는 게 잘 맞는지를 가늠하는 전통 기법 */
+var CARDINAL_SIGNS = ["양자리","게자리","천칭자리","염소자리"];
+var FIXED_SIGNS = ["황소자리","사자자리","전갈자리","물병자리"];
+var MUTABLE_SIGNS = ["쌍둥이자리","처녀자리","궁수자리","물고기자리"];
 
 function buildPlanetCards(opts){
   var cusps=opts.cusps, planets=opts.planets, order=opts.order, retro=opts.retro||{},
       natalCusps=opts.natalCusps, baseYear=opts.baseYear, baseMonth=opts.baseMonth,
-      natalPoints=opts.natalPoints, lordOfYear=opts.lordOfYear, angles=opts.angles||{};
+      natalPoints=opts.natalPoints, lordOfYear=opts.lordOfYear, angles=opts.angles||{},
+      ascRulerName=opts.ascRulerName, natalFullPlanets=opts.natalFullPlanets||{};
 
   // 개인화 5) 앵글(ASC·DC·MC·IC) 근접 — 흉성/길성이 이 네 축과 가깝게 합을 이루면 그 기운이
   // 그 해 표면으로 유난히 직접적으로 드러난다고 보는 고전 기법 (오브 5도 이내)
@@ -875,6 +881,20 @@ function buildPlanetCards(opts){
       flavor = "평소(원국)엔 힘이 약하던 영역이라, 올해 유독 낯설게 느껴질 수 있어요.";
     } else {
       flavor = "원래도 익숙한 영역이라 무리 없이 자연스럽게 흘러가요.";
+    }
+
+    // 개인화 6) SR 상승궁 지배행성 — '마음이 쏠리는 영역(태양)'과 별개로 '실제 행동이 향하는 영역'을 짚어주는 기법.
+    // 새 노트를 따로 만들지 않고 위 flavor 문장에 자연스럽게 이어 붙여 한 흐름으로 읽히게 한다
+    if(ascRulerName && name===ascRulerName){
+      flavor += " 게다가 이 천체가 이번 해 상승궁을 다스리는 별이기도 해서, 마음속 생각에 머물지 않고 실제 태도와 행동으로까지 자연스럽게 드러나기 쉬워요.";
+    }
+    // 개인화 7) 원국과 같은 별자리 활성화 — 태어날 때 이 천체가 있던 별자리와 이번 해 위치한 별자리가 같으면
+    // '타고난 기운이 실제로 펼쳐지는 해'로 읽는 전통 기법. 이 역시 flavor 문장에 자연스럽게 이어 붙인다
+    if(natalFullPlanets[name]!==undefined){
+      var natalSignForThis = signOf(natalFullPlanets[name]);
+      if(natalSignForThis === sign){
+        flavor += " 원국에서도 같은 "+sign+" 기운이었던 자리라, 태어날 때부터 예정돼 있던 흐름이 이번 해에 실제로 펼쳐지는 셈이에요.";
+      }
     }
 
     var cardClass = "pillar" + (isLuminary ? " key" : "");
@@ -1033,16 +1053,24 @@ function summaryHtml(opts){
       order=opts.order, baseYear=opts.baseYear, baseMonth=opts.baseMonth, baseDay=opts.baseDay,
       houseSystem=opts.houseSystem, lCityName=opts.lCityName,
       ageAtReturn=opts.ageAtReturn, profectedHouseNum=opts.profectedHouseNum, profectedSign=opts.profectedSign,
-      lordOfYearName=opts.lordOfYearName, upperCount=opts.upperCount, lowerCount=opts.lowerCount, sunHouseType=opts.sunHouseType;
+      lordOfYearName=opts.lordOfYearName, upperCount=opts.upperCount, lowerCount=opts.lowerCount, sunHouseType=opts.sunHouseType,
+      ascRulerHouse=opts.ascRulerHouse, dominantModality=opts.dominantModality;
 
   var endYear = baseYear+1, endMonth = baseMonth, endDay = baseDay;
   if(endMonth===2 && endDay===29 && !isLeapYear(endYear)) endDay = 28; // 윤년 2/29 → 다음해엔 날짜 없음 보정
+
+  // SR 상승궁 지배행성의 하우스 — '마음이 쏠리는 영역(태양)'과 '실제 행동이 향하는 영역(상승궁 지배행성)'을
+  // 비교해, 둘이 같으면 마음먹은 대로 행동까지 이어지고 다르면 마음과 행동이 다른 곳을 향한다고 읽는다
+  var actionFlavor = (ascRulerHouse===sunHouse)
+    ? " 실제 행동도 자연스럽게 마음이 쏠리는 쪽으로 향해서, 마음먹은 게 그대로 행동으로 이어지기 쉬운 해예요."
+    : " 다만 실제로 몸이 움직이고 행동하게 되는 쪽은 <b>"+HOUSE_THEME[ascRulerHouse-1]+"</b> 쪽이라, 마음과 행동이 서로 다른 곳을 향할 수 있어요.";
 
   var headline = "<div class='summaryHeadline'>"
     + "<b>"+baseYear+"년 "+baseMonth+"월 "+baseDay+"일</b>부터 <b>"+endYear+"년 "+endMonth+"월 "+endDay+"일</b>까지, 1년간의 사주 흐름이에요.<br>"
     + "겉으로 드러나는 인상은 <b>"+ascSign+"</b> 분위기로 "+SIGN_TRAIT[ascSign]+", "
     + "마음이 가장 쏠리는 영역은 <b>"+HOUSE_THEME[sunHouse-1]+"</b>이고, "
     + "감정이 편안해지는 리듬은 <b>"+moonSign+"</b>라 "+SIGN_TRAIT[moonSign]+" 편이에요."
+    + actionFlavor
     + "<div class='summaryMeta'>(상승궁 "+ascSign+" · 태양 "+sunHouse+"번째 하우스 · 달 "+moonSign+")</div>"
     + "</div>";
 
@@ -1081,13 +1109,19 @@ function summaryHtml(opts){
   } else {
     detail2 += "천체들이 위아래로 고르게 퍼져 있어, 안팎의 균형을 맞추게 되는 해예요. ";
   }
-  if(sunHouseType==="angular"){
-    detail2 += "태양이 있는 자리가 '시작하는 자리'라, 초반부터 속도감 있게 전개될 가능성이 커요.";
-  } else if(sunHouseType==="succedent"){
-    detail2 += "태양이 있는 자리가 '다지는 자리'라, 중반에 가장 무르익어요.";
-  } else {
-    detail2 += "태양이 있는 자리가 '마무리하는 자리'라, 하반기에 본격적으로 전개돼요.";
-  }
+  // 태양 하우스 유형(시작·중반·후반 중 언제 힘이 실리는지) + 우세 특성(어떤 태도로 움직이는 게 잘 맞는지)을
+  // 따로따로 나열하지 않고, '언제 + 어떻게'가 하나로 이어지는 리듬 문장으로 결합한다
+  var timingClause = sunHouseType==="angular" ? "태양이 있는 자리가 '시작하는 자리'라 초반부터 속도감 있게 전개되는데,"
+    : sunHouseType==="succedent" ? "태양이 있는 자리가 '다지는 자리'라 중반에 가장 무르익는데,"
+    : "태양이 있는 자리가 '마무리하는 자리'라 하반기에 본격적으로 전개되는데,";
+  var modalityClause = dominantModality==="cardinal"
+    ? "천체 전반도 저지르고 시작하는 기운에 몰려 있어서, 고민만 하기보다 일단 움직이는 쪽이 이 해엔 더 잘 맞아요."
+    : dominantModality==="fixed"
+    ? "천체 전반도 꾸준히 지속하는 기운에 몰려 있어서, 새로 벌리기보다 이미 하던 걸 끝까지 밀고 나가는 쪽이 이 해엔 더 잘 맞아요."
+    : dominantModality==="mutable"
+    ? "천체 전반도 유연하게 적응하는 기운에 몰려 있어서, 한 가지에 못박기보다 여러 선택지를 열어두는 쪽이 이 해엔 더 잘 맞아요."
+    : "천체 전반은 딱히 한쪽으로 쏠리지 않고 고르게 퍼져 있어서, 상황에 맞게 유연하게 판단하면 돼요.";
+  detail2 += timingClause+" "+modalityClause;
   detail2 += "</div>";
 
   var chips = "<div class='chipRow'>";
@@ -1406,6 +1440,14 @@ function compute(){
   var houseSystem = document.getElementById("houseSystem").value;
   var natalCusps = houseSystem==="placidus" ? placidusCusps(birthJD, bCity.lat, bCity.lon) : equalHouseCusps(natalAsc);
 
+  // 원국(태어난 순간) 11개 천체 위치 — '올해 이 천체가 원국과 같은 별자리에 있는지' 비교에 쓴다.
+  // 같은 별자리라면 태어날 때부터 있던 기운이 이번 해에 실제로 발현되는 것으로 본다
+  var natalFullPlanets = {"태양":natalSun, "달":natalMoon};
+  for(var nplName in PLANET_ELEM){ natalFullPlanets[nplName]=planetLon(PLANET_ELEM[nplName], birthJD, natalSunObj); }
+  for(var noName in OUTER_ELEM){ natalFullPlanets[noName]=planetLon(OUTER_ELEM[noName], birthJD, natalSunObj); }
+  natalFullPlanets["명왕성"] = plutoLon(birthJD);
+  natalFullPlanets["노드"] = meanNodeLon(birthJD);
+
   var ly=+lDate.split("-")[0], lm=+lDate.split("-")[1], ld=+lDate.split("-")[2];
   var lh=+lTime.split(":")[0]+ (+lTime.split(":")[1])/60;
   var lTz = effectiveTz(lCity, ly, lm, ld);
@@ -1483,6 +1525,26 @@ function compute(){
   // 태양 하우스 유형 — 활동궁(초반)/안정궁(중반)/종결궁(후반) 중 어디에 힘이 실리는지
   var sunHouseType = ANGULAR_HOUSES.indexOf(sunHouse)>=0 ? "angular"
     : SUCCEDENT_HOUSES.indexOf(sunHouse)>=0 ? "succedent" : "cadent";
+
+  // SR 상승궁 지배행성 — '마음이 쏠리는 영역(태양)'과 별개로 '실제 행동이 향하는 영역'을 보여주는 기법.
+  // 둘이 같으면 마음먹은 대로 행동까지 이어지고, 다르면 마음과 행동이 다른 곳을 향한다고 읽는다
+  var ascRulerName = SIGN_RULER[ascSign];
+  var ascRulerHouse = houseOfLongitude(planets[ascRulerName], srCusps);
+
+  // 우세 특성(모달리티) — 핵심 7행성이 활동궁/고정궁/변동궁 중 어디에 가장 몰려 있는지로
+  // 태양 하우스 유형(시작/중반/후반)과 결합해 '이 해를 대하는 태도'까지 하나의 흐름으로 안내한다
+  var modalityCount = {cardinal:0, fixed:0, mutable:0};
+  ["태양","달","수성","금성","화성","목성","토성"].forEach(function(name){
+    var sg = signOf(planets[name]);
+    if(CARDINAL_SIGNS.indexOf(sg)>=0) modalityCount.cardinal++;
+    else if(FIXED_SIGNS.indexOf(sg)>=0) modalityCount.fixed++;
+    else modalityCount.mutable++;
+  });
+  var modalityMax = Math.max(modalityCount.cardinal, modalityCount.fixed, modalityCount.mutable);
+  var dominantModality = modalityMax>=3
+    ? (modalityCount.cardinal===modalityMax ? "cardinal" : modalityCount.fixed===modalityMax ? "fixed" : "mutable")
+    : null;
+
   var pillarsHtml = "";
   pillarsHtml += "<div class='pillar'><b>남들에게 비치는 첫인상 — "+ascSign+" 분위기</b> <span class='pillarMeta'>(상승궁 · Ascendant)</span><br>이건 흔히 아는 '내 별자리'(태양궁)와는 다른 개념으로, 처음 만난 사람이 느끼는 인상을 보여줘요. "+ASC_IMPRESSION_EX[ascSign]+"</div>";
   // 개인화: 태어날 때도 태양이 있던 영역인지 비교 — 같은 영역이면 원래 관심사가 이어지는 것이고, 다른 영역이면 올해 새롭게 부각되는 것이라 의미가 달라진다
@@ -1537,7 +1599,8 @@ function compute(){
     retro: retro, cusps: srCusps, planets: planets, order: order,
     baseYear: f.y, baseMonth: f.m, baseDay: f.d, houseSystem: houseSystem, lCityName: lCity.name,
     ageAtReturn: ageAtReturn, profectedHouseNum: profectedHouseNum, profectedSign: profectedSign,
-    lordOfYearName: lordOfYearName, upperCount: upperCount, lowerCount: lowerCount, sunHouseType: sunHouseType
+    lordOfYearName: lordOfYearName, upperCount: upperCount, lowerCount: lowerCount, sunHouseType: sunHouseType,
+    ascRulerHouse: ascRulerHouse, dominantModality: dominantModality
   });
 
   document.getElementById("natalCompare").innerHTML = natalCompareHtml({
@@ -1551,7 +1614,8 @@ function compute(){
   var planetCards = buildPlanetCards({
     cusps: srCusps, planets: fullPlanets, order: fullOrder, retro: fullRetro,
     natalCusps: natalCusps, baseYear: f.y, baseMonth: f.m, natalPoints: natalPoints,
-    lordOfYear: lordOfYearName, angles: {asc: asc, mc: mc}
+    lordOfYear: lordOfYearName, angles: {asc: asc, mc: mc},
+    ascRulerName: ascRulerName, natalFullPlanets: natalFullPlanets
   });
   document.getElementById("caution").innerHTML = cautionHtml(planetCards);
   document.getElementById("standout").innerHTML = standoutHtml(planetCards);
