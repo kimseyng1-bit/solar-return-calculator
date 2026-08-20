@@ -797,7 +797,7 @@ function buildPlanetCards(opts){
   var cusps=opts.cusps, planets=opts.planets, order=opts.order, retro=opts.retro||{},
       natalCusps=opts.natalCusps, baseYear=opts.baseYear, baseMonth=opts.baseMonth,
       natalPoints=opts.natalPoints, lordOfYear=opts.lordOfYear, angles=opts.angles||{},
-      ascRulerName=opts.ascRulerName, natalFullPlanets=opts.natalFullPlanets||{};
+      ascRulerName=opts.ascRulerName, natalFullPlanets=opts.natalFullPlanets||{}, rulesHousesOf=opts.rulesHousesOf||{};
 
   // 개인화 5) 앵글(ASC·DC·MC·IC) 근접 — 흉성/길성이 이 네 축과 가깝게 합을 이루면 그 기운이
   // 그 해 표면으로 유난히 직접적으로 드러난다고 보는 고전 기법 (오브 5도 이내)
@@ -894,6 +894,21 @@ function buildPlanetCards(opts){
       var natalSignForThis = signOf(natalFullPlanets[name]);
       if(natalSignForThis === sign){
         flavor += " 원국에서도 같은 "+sign+" 기운이었던 자리라, 태어날 때부터 예정돼 있던 흐름이 이번 해에 실제로 펼쳐지는 셈이에요.";
+      }
+    }
+
+    // 개인화 8) 하우스 지배행성 체인 — 이 천체가 자기 위치(house) 말고 '다스리는' 다른 영역이 있으면
+    // 그 영역의 흐름도 이 천체를 따라 함께 움직인다고 짚어준다 (재물·관계·커리어 등을 구체적으로 연결)
+    var rulesHouses = (rulesHousesOf[name]||[]).filter(function(h){ return h!==house; });
+    if(rulesHouses.length){
+      var ruledThemes = rulesHouses.map(function(h){ return HOUSE_THEME[h-1]; });
+      flavor += " 게다가 이 천체가 "+ruledThemes.join(", ")+josaWa(ruledThemes[ruledThemes.length-1])+" 영역(하우스)까지 함께 다스리고 있어서, 그쪽 흐름도 이 천체를 따라 같이 움직여요.";
+
+      // 개인화 9) 지배행성 간 어스펙트 — 이 천체가 맺은 가장 강한 각의 상대도 다른 영역을 다스리는 지배행성이면,
+      // "두 영역이 서로 얽혀 있다"는 훨씬 구체적인 문장으로 이어준다
+      if(strongest && strongest.partnerRaw && rulesHousesOf[strongest.partnerRaw] && rulesHousesOf[strongest.partnerRaw].length){
+        var partnerThemes = rulesHousesOf[strongest.partnerRaw].map(function(h){ return HOUSE_THEME[h-1]; });
+        flavor += " 마침 "+strongest.partner+josaWa(strongest.partner)+" "+strongest.aspName+josaEuro(strongest.aspName)+" 얽혀 있는데, "+strongest.partner+josaEun(strongest.partner)+" "+partnerThemes.join(", ")+" 영역의 지배행성이기도 해서, 두 영역이 서로 영향을 주고받기 쉬워요.";
       }
     }
 
@@ -1054,7 +1069,8 @@ function summaryHtml(opts){
       houseSystem=opts.houseSystem, lCityName=opts.lCityName,
       ageAtReturn=opts.ageAtReturn, profectedHouseNum=opts.profectedHouseNum, profectedSign=opts.profectedSign,
       lordOfYearName=opts.lordOfYearName, upperCount=opts.upperCount, lowerCount=opts.lowerCount, sunHouseType=opts.sunHouseType,
-      ascRulerHouse=opts.ascRulerHouse, dominantModality=opts.dominantModality;
+      ascRulerHouse=opts.ascRulerHouse, dominantModality=opts.dominantModality,
+      nextProfectedHouseNum=opts.nextProfectedHouseNum, nextLordOfYearName=opts.nextLordOfYearName;
 
   var endYear = baseYear+1, endMonth = baseMonth, endDay = baseDay;
   if(endMonth===2 && endDay===29 && !isLeapYear(endYear)) endDay = 28; // 윤년 2/29 → 다음해엔 날짜 없음 보정
@@ -1102,6 +1118,12 @@ function summaryHtml(opts){
   detail2 += "전통 점성술에서는 나이에 따라 매년 원국 하우스를 하나씩 옮겨가며 그 해를 대표하는 '연주성'을 정해요. "
     + "태어난 지 "+ageAtReturn+"년째인 올해는 원국 "+profectedHouseNum+"번째 자리("+profectedSign+")가 바통을 이어받는 해라, "
     + "<b>"+lordOfYearName+"</b>"+josaI(lordOfYearName)+" 이 해 전체를 대표하는 주인공이에요. 아래 카드에서 👑 표시를 확인해 보세요. ";
+
+  // 다음 해 연주성 미리보기 — 프로펙션은 매년 하나씩 넘어가는 기법이라, 올해 주제가 내년엔 어디로 이어지는지도 짐작할 수 있다
+  detail2 += "내년(<b>"+(baseYear+1)+"년</b>)부터는 원국 "+nextProfectedHouseNum+"번째 자리로 넘어가면서, 주제가 '"+HOUSE_THEME[profectedHouseNum-1]+"'에서 '"+HOUSE_THEME[nextProfectedHouseNum-1]+"'으로 옮겨가기 시작해요.";
+  detail2 += (nextLordOfYearName !== lordOfYearName)
+    ? " 그때는 <b>"+nextLordOfYearName+"</b>"+josaI(nextLordOfYearName)+" 새로운 주인공이 될 거예요. "
+    : " 다만 주인공 천체는 "+nextLordOfYearName+josaEuro(nextLordOfYearName)+" 아직 같아요. ";
   if(upperCount > lowerCount + 1){
     detail2 += "천체들이 대체로 하늘 위쪽(사회·관계 방향)에 몰려 있어, 밖으로 나가 존재감을 드러내게 되는 해예요. ";
   } else if(lowerCount > upperCount + 1){
@@ -1515,6 +1537,13 @@ function compute(){
   var profectedSign = SIGNS[(((natalAscSignIdx + ageAtReturn) % 12) + 12) % 12];
   var lordOfYearName = SIGN_RULER[profectedSign];
 
+  // 다음 해 연주성 미리보기 — 프로펙션은 매년 하나씩 하우스를 옮겨가는 기법이라, 나이를 1살 더한 값으로
+  // 같은 계산을 한 번 더 하면 '내년엔 주제가 어디로 넘어가는지'를 미리 보여줄 수 있다
+  var nextAge = ageAtReturn + 1;
+  var nextProfectedHouseNum = (((nextAge % 12) + 12) % 12) + 1;
+  var nextProfectedSign = SIGNS[(((natalAscSignIdx + nextAge) % 12) + 12) % 12];
+  var nextLordOfYearName = SIGN_RULER[nextProfectedSign];
+
   // 반구 쏠림 — 핵심 7행성이 지평선 위(7~12하우스, 사회·관계)/아래(1~6하우스, 개인·가정) 중 어디에 몰려 있는지
   var upperCount = 0, lowerCount = 0;
   ["태양","달","수성","금성","화성","목성","토성"].forEach(function(name){
@@ -1544,6 +1573,17 @@ function compute(){
   var dominantModality = modalityMax>=3
     ? (modalityCount.cardinal===modalityMax ? "cardinal" : modalityCount.fixed===modalityMax ? "fixed" : "mutable")
     : null;
+
+  // 12개 하우스 지배행성 체인 — 각 하우스 커스프의 별자리를 다스리는 행성을 찾아, 그 행성이 이번 해 어디에 있는지로
+  // 재물·관계·커리어·건강 등 영역별 흐름을 훨씬 구체적으로 짚을 수 있게 하는 고전 기법.
+  // 한 행성이 여러 하우스를 함께 다스릴 수 있어 rulesHousesOf[행성명]은 하우스 번호 배열이다
+  var rulesHousesOf = {};
+  for(var hNum=1; hNum<=12; hNum++){
+    var cuspSignName = signOf(srCusps[hNum]);
+    var rulerOfHouse = SIGN_RULER[cuspSignName];
+    if(!rulesHousesOf[rulerOfHouse]) rulesHousesOf[rulerOfHouse] = [];
+    rulesHousesOf[rulerOfHouse].push(hNum);
+  }
 
   var pillarsHtml = "";
   pillarsHtml += "<div class='pillar'><b>남들에게 비치는 첫인상 — "+ascSign+" 분위기</b> <span class='pillarMeta'>(상승궁 · Ascendant)</span><br>이건 흔히 아는 '내 별자리'(태양궁)와는 다른 개념으로, 처음 만난 사람이 느끼는 인상을 보여줘요. "+ASC_IMPRESSION_EX[ascSign]+"</div>";
@@ -1600,7 +1640,8 @@ function compute(){
     baseYear: f.y, baseMonth: f.m, baseDay: f.d, houseSystem: houseSystem, lCityName: lCity.name,
     ageAtReturn: ageAtReturn, profectedHouseNum: profectedHouseNum, profectedSign: profectedSign,
     lordOfYearName: lordOfYearName, upperCount: upperCount, lowerCount: lowerCount, sunHouseType: sunHouseType,
-    ascRulerHouse: ascRulerHouse, dominantModality: dominantModality
+    ascRulerHouse: ascRulerHouse, dominantModality: dominantModality,
+    nextProfectedHouseNum: nextProfectedHouseNum, nextLordOfYearName: nextLordOfYearName
   });
 
   document.getElementById("natalCompare").innerHTML = natalCompareHtml({
@@ -1615,7 +1656,7 @@ function compute(){
     cusps: srCusps, planets: fullPlanets, order: fullOrder, retro: fullRetro,
     natalCusps: natalCusps, baseYear: f.y, baseMonth: f.m, natalPoints: natalPoints,
     lordOfYear: lordOfYearName, angles: {asc: asc, mc: mc},
-    ascRulerName: ascRulerName, natalFullPlanets: natalFullPlanets
+    ascRulerName: ascRulerName, natalFullPlanets: natalFullPlanets, rulesHousesOf: rulesHousesOf
   });
   document.getElementById("caution").innerHTML = cautionHtml(planetCards);
   document.getElementById("standout").innerHTML = standoutHtml(planetCards);
