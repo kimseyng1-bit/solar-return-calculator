@@ -795,17 +795,19 @@ function buildPlanetCards(opts){
 
   // 개인화 5) 앵글(ASC·DC·MC·IC) 근접 — 흉성/길성이 이 네 축과 가깝게 합을 이루면 그 기운이
   // 그 해 표면으로 유난히 직접적으로 드러난다고 보는 고전 기법 (오브 5도 이내)
+  // houseIdx는 그 앵글이 곧 어느 하우스의 시작점인지를 가리켜, HOUSE_THEME·HOUSE_EVENT_EX와 같은 말로
+  // "이 앵글이 실제로 어떤 삶의 영역을 뜻하는지"를 쉬운 말로 풀어 설명하는 데 쓴다
   var angleList = (angles.asc!==undefined && angles.mc!==undefined) ? [
-    {name:"상승점(ASC)", lon:angles.asc},
-    {name:"하강점(DC)", lon:norm360(angles.asc+180)},
-    {name:"중천점(MC)", lon:angles.mc},
-    {name:"천저점(IC)", lon:norm360(angles.mc+180)}
+    {name:"상승점(ASC)", lon:angles.asc, houseIdx:0},
+    {name:"천저점(IC)", lon:norm360(angles.mc+180), houseIdx:3},
+    {name:"하강점(DC)", lon:norm360(angles.asc+180), houseIdx:6},
+    {name:"중천점(MC)", lon:angles.mc, houseIdx:9}
   ] : [];
   function angleHitFor(lon){
     var best = null;
     angleList.forEach(function(a){
       var d = Math.abs(angDiff(lon, a.lon));
-      if(d<=5 && (!best || d<best.orb)) best = {name:a.name, orb:d};
+      if(d<=5 && (!best || d<best.orb)) best = {name:a.name, orb:d, houseIdx:a.houseIdx};
     });
     return best;
   }
@@ -850,7 +852,7 @@ function buildPlanetCards(opts){
     var clusterBadge = isCluster ? " <span class='chip warn'>⭐ 원국 스텔리움</span>" : "";
     var lordBadge = (lordOfYear && name===lordOfYear) ? " <span class='chip good' title='나이에 따라 매년 바뀌는, 전통 점성술에서 그 해를 대표하는 행성입니다'>👑 연주성</span>" : "";
     var angleHit = angleHitFor(lon);
-    var angleBadge = angleHit ? " <span class='chip hard' title='주요 축(앵글)과 가깝게 합을 이루면 그 기운이 유난히 직접적으로 드러난다고 봐요'>🎯 "+angleHit.name+" 근접</span>" : "";
+    var angleBadge = angleHit ? " <span class='chip hard' title='이 자리와 딱 붙어 있으면 그 기운이 생각에 그치지 않고 실제 눈에 보이는 일로 뚜렷하게 나타나요'>🎯 "+angleHit.name+" 근접</span>" : "";
 
     var totalMonth = baseMonth-1+(house-1);
     var year = baseYear + Math.floor(totalMonth/12);
@@ -904,7 +906,7 @@ function buildPlanetCards(opts){
     }
     // 앵글(ASC·DC·MC·IC) 근접이면 별도 줄로 안내 — 그 기운이 삶의 표면으로 유난히 직접적으로 드러난다고 보는 기법
     if(angleHit){
-      cardHtml += "<div class='angleNote'>🎯 "+name+josaI(name)+" 이번 해 "+angleHit.name+"과 가깝게 맞닿아 있어요(오브 "+angleHit.orb.toFixed(1)+"°). 그만큼 이 기운이 겉으로 뚜렷하게, 사건처럼 체감될 가능성이 커요.</div>";
+      cardHtml += "<div class='angleNote'>🎯 "+name+josaI(name)+" 이번 해 '"+HOUSE_THEME[angleHit.houseIdx]+"'을 상징하는 자리("+angleHit.name+")와 딱 붙어 있어요. "+PLANET_ACTION[name]+". 이런 변화가 "+HOUSE_EVENT_EX[angleHit.houseIdx]+" 상황처럼, 생각에서 그치지 않고 실제로 눈에 보이는 일이 되어 뚜렷하게 나타날 가능성이 커요.</div>";
     }
     if(lordOfYear && name===lordOfYear){
       cardHtml += "<div class='angleNote'>👑 나이에 따라 매년 바뀌는 '연주성' 기법으로 볼 때, "+name+josaI(name)+" 올해 전체를 대표하는 천체예요. 이 카드의 흐름이 한 해의 밑바탕에 깔린다고 보면 됩니다.</div>";
