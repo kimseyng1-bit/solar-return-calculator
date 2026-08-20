@@ -135,12 +135,21 @@
   .glossaryGrid b{color:var(--text);}
   @media (max-width:520px){ .glossaryGrid{grid-template-columns:1fr;} }
 
-  /* 고급 설정(하우스 시스템) 접기 */
-  details.advanced summary{cursor:pointer; color:var(--gold2); font-size:14px; font-weight:600; list-style:none; display:flex; align-items:center; gap:8px;}
-  details.advanced summary::-webkit-details-marker{display:none;}
-  details.advanced summary:before{content:"▸"; font-size:11px;}
-  details.advanced[open] summary:before{content:"▾"; }
-  details.advanced .field{margin-top:12px;}
+  /* 쉬운 설명만 보기 토글 */
+  .simpleToggleRow{
+    display:flex; align-items:center; flex-wrap:wrap; gap:6px 12px;
+    background:#150f36; border:1px solid var(--line); border-radius:12px;
+    padding:10px 16px; margin-bottom:16px;
+  }
+  .simpleToggle{display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--text); font-weight:600; font-size:13px;}
+  .simpleToggle input{accent-color:var(--gold2); width:16px; height:16px; cursor:pointer;}
+  .simpleToggleHint{font-size:11.5px; color:var(--sub);}
+  #result.simple-mode .pillarMeta,
+  #result.simple-mode .legend,
+  #result.simple-mode .alOrb,
+  #result.simple-mode .aspChipTerm{
+    display:none;
+  }
 
   /* 읽는 순서 가이드 / 목차 */
   .guideBox{
@@ -282,22 +291,16 @@
     </div>
   </div>
 
-  <div class="card">
-    <details class="advanced">
-      <summary>⚙ 고급 설정 — 하우스 시스템 (기본값 그대로 두어도 됩니다)</summary>
-      <div class="field">
-        <select id="houseSystem">
-          <option value="placidus" selected>플라시더스 (Placidus) — 전문 프로그램에서 가장 많이 쓰는 방식, 위도별로 하우스 폭이 달라짐 (기본값)</option>
-          <option value="equal">이퀄하우스 — 상승궁 기준 30도씩 균등 분할하는 약식 방식</option>
-        </select>
-        <div class="hint">위도 66도를 넘는 극권 지역은 플라시더스가 정의되지 않아 자동으로 이퀄하우스로 계산됩니다. 잘 모르겠다면 기본값(플라시더스)을 그대로 사용하세요.</div>
-      </div>
-    </details>
-  </div>
-
   <div class="btnRow"><button class="main" onclick="compute()">1년 사주 계산하기</button></div>
 
-  <div id="result">
+  <div id="result" class="simple-mode">
+    <div class="simpleToggleRow">
+      <label class="simpleToggle">
+        <input type="checkbox" id="simpleModeToggle" checked onchange="toggleSimpleMode()">
+        쉬운 설명만 보기
+      </label>
+      <span class="simpleToggleHint">상승궁·하우스·어스펙트·오브 같은 점성술 용어를 숨기고, 쉬운 문장 위주로 보여줍니다. 끄면 자세한 용어까지 함께 볼 수 있어요.</span>
+    </div>
     <div class="guideBox">
       <div class="gTitle">🧭 이 결과, 이렇게 읽어보세요</div>
       <ol>
@@ -1148,7 +1151,6 @@ function summaryHtml(opts){
 
   var chips = "<div class='chipRow'>";
   chips += "<span class='chip'>📍"+lCityName+" 기준</span>";
-  chips += "<span class='chip'>🏠 하우스 계산방식: "+(houseSystem==="placidus"?"플라시더스":"이퀄하우스")+"</span>";
   chips += "<span class='chip'>🌙 "+moonPh.name+" ("+moonPh.illum+"%)</span>";
 
   if(retroNames.length){
@@ -1235,12 +1237,12 @@ function aspectLegendHtml(){
 }
 function aspectLineAmong(x){
   return "<div class='aspectLine'><span class='alNames'>"+x.a+" · "+x.b+"</span>"
-    + "<span class='chip "+x.asp.tag+"'>"+x.asp.name+"</span>"
+    + "<span class='chip "+x.asp.tag+" aspChipTerm'>"+x.asp.name+"</span>"
     + "<span class='alOrb'>오브 "+x.asp.orb.toFixed(1)+"°</span></div>";
 }
 function aspectLineCross(x){
   return "<div class='aspectLine'><span class='alNames'>올해 "+x.sr+" · 원래 "+x.natal+"</span>"
-    + "<span class='chip "+x.asp.tag+"'>"+x.asp.name+"</span>"
+    + "<span class='chip "+x.asp.tag+" aspChipTerm'>"+x.asp.name+"</span>"
     + "<span class='alOrb'>오브 "+x.asp.orb.toFixed(1)+"°</span></div>";
 }
 function aspectSummaryHtml(goodCount, hardCount, neutralCount){
@@ -1436,6 +1438,25 @@ function isValidYMD(dateStr){
   return y>=1900 && y<=2099;
 }
 
+/* ---------- 쉬운 설명만 보기 토글 ---------- */
+function toggleSimpleMode(){
+  var checked = document.getElementById("simpleModeToggle").checked;
+  document.getElementById("result").classList.toggle("simple-mode", checked);
+  try{ localStorage.setItem("srSimpleMode", checked ? "1" : "0"); }catch(e){}
+}
+(function initSimpleMode(){
+  var saved = null;
+  try{ saved = localStorage.getItem("srSimpleMode"); }catch(e){}
+  if(saved === "0"){
+    document.addEventListener("DOMContentLoaded", function(){
+      var cb = document.getElementById("simpleModeToggle");
+      var r = document.getElementById("result");
+      if(cb) cb.checked = false;
+      if(r) r.classList.remove("simple-mode");
+    });
+  }
+})();
+
 /* ---------- 계산 실행 ---------- */
 function compute(){
   var bDate = document.getElementById("birthDate").value;
@@ -1459,7 +1480,7 @@ function compute(){
   var natalMoon = moonLon(birthJD);
   var natalAsc = ascendant(birthJD, bCity.lat, bCity.lon);
   var natalMC = midheaven(birthJD, bCity.lon);
-  var houseSystem = document.getElementById("houseSystem").value;
+  var houseSystem = "placidus";
   var natalCusps = houseSystem==="placidus" ? placidusCusps(birthJD, bCity.lat, bCity.lon) : equalHouseCusps(natalAsc);
 
   // 원국(태어난 순간) 11개 천체 위치 — '올해 이 천체가 원국과 같은 별자리에 있는지' 비교에 쓴다.
@@ -1597,9 +1618,9 @@ function compute(){
   document.getElementById("pillars").innerHTML = pillarsHtml;
 
   var mcSign = signOf(mc);
-  var mcCaveat = (houseSystem==="placidus" && Math.abs(lCity.lat)<=66)
-    ? "참고로 플라시더스 방식에서는 10번째 하우스의 시작점과 정확히 같은 지점이에요."
-    : "참고로 이퀄하우스 방식(또는 극권 지역이라 이퀄하우스로 계산됨)이라 10번째 하우스의 시작점과 정확히 일치하지 않을 수 있지만, 의미는 비슷하니 참고해 주세요.";
+  var mcCaveat = (Math.abs(lCity.lat)<=66)
+    ? "참고로 이 지점은 10번째 하우스의 시작점과 정확히 같은 지점이에요."
+    : "참고로 위도가 높은 극권 지역이라 10번째 하우스의 시작점과 정확히 일치하지 않을 수 있지만, 의미는 비슷하니 참고해 주세요.";
   document.getElementById("mcInfo").innerHTML =
     "<div class='pillar'><b>일·사회생활에서 비치는 이미지 — "+mcSign+" 색깔</b> <span class='pillarMeta'>(중천점 · MC)</span><br>"+MC_IMAGE_EX[mcSign]+" "+mcCaveat+"</div>";
 
