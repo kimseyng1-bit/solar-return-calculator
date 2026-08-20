@@ -908,8 +908,27 @@ function buildPlanetCards(opts){
     if(angleHit){
       cardHtml += "<div class='angleNote'>🎯 "+name+josaI(name)+" 이번 해 '"+HOUSE_THEME[angleHit.houseIdx]+"'을 상징하는 자리("+angleHit.name+")와 딱 붙어 있어요. "+PLANET_ACTION[name]+". 이런 변화가 "+HOUSE_EVENT_EX[angleHit.houseIdx]+" 상황처럼, 생각에서 그치지 않고 실제로 눈에 보이는 일이 되어 뚜렷하게 나타날 가능성이 커요.</div>";
     }
-    if(lordOfYear && name===lordOfYear){
-      cardHtml += "<div class='angleNote'>👑 나이에 따라 매년 바뀌는 '연주성' 기법으로 볼 때, "+name+josaI(name)+" 올해 전체를 대표하는 천체예요. 이 카드의 흐름이 한 해의 밑바탕에 깔린다고 보면 됩니다.</div>";
+    // 연주성이면 하우스·어스펙트·역행·앵글 근접까지 한데 모아, 이 천체가 왜 '올해 전체의 기반'인지를
+    // 하나의 종합 문단으로 풀어서 설명한다 (단순히 배지만 붙이는 데 그치지 않도록)
+    var isLord = !!(lordOfYear && name===lordOfYear);
+    if(isLord){
+      var lordParts = [];
+      lordParts.push("나이에 따라 매년 바뀌는 '연주성' 기법으로 볼 때, "+name+josaI(name)+" 올해 전체를 대표하는 천체예요. 그래서 이 카드의 흐름이 다른 천체보다 한 해 전체 분위기에 더 깊게 깔려요.");
+      lordParts.push("'"+HOUSE_THEME[house-1]+"' 쪽에 이 해의 무게중심이 실리고,");
+      if(strongest){
+        lordParts.push(strongest.partner+josaWa(strongest.partner)+" "+strongest.aspName+josaEuro(strongest.aspName)+" 이어져 있어 그쪽 기운과 계속 영향을 주고받게 돼요.");
+      } else {
+        lordParts.push("다른 천체와 뚜렷한 각도 관계 없이 단독으로 움직이는 흐름이라, 남에게 기대기보다 스스로 판단하고 결정하는 힘이 중요해져요.");
+      }
+      if(!isNode && retro[name]){
+        lordParts.push("역행 중이라 이 흐름은 적극적으로 밀어붙이기보다 재점검하고 다지는 쪽으로 풀리기 쉬워요.");
+      } else {
+        lordParts.push("순행 중이라 이 흐름이 적극적이고 앞으로 나아가는 방향으로 풀리기 쉬워요.");
+      }
+      if(angleHit){
+        lordParts.push("게다가 "+angleHit.name+"과도 딱 붙어 있어, 이 흐름이 생각에 머물지 않고 실제 사건처럼 뚜렷하게 드러날 가능성이 커요.");
+      }
+      cardHtml += "<div class='angleNote'>👑 "+lordParts.join(" ")+"</div>";
     }
     cardHtml += "</div>";
 
@@ -935,17 +954,24 @@ function buildPlanetCards(opts){
       else if(MALEFIC_PLANETS.indexOf(name)>=0) score -= 1;
     }
 
-    cards.push({name:name, house:house, score:score, html:cardHtml});
+    cards.push({name:name, house:house, score:score, html:cardHtml, isLord:isLord});
   });
   return cards;
 }
+// 연주성 카드는 점수 순위와 무관하게 항상 맨 앞에 — 그 해 전체를 대표하는 천체이니 가장 먼저 눈에 띄어야 한다
+function sortByLordThenScore(desc){
+  return function(a,b){
+    if(a.isLord !== b.isLord) return a.isLord ? -1 : 1;
+    return desc ? b.score-a.score : a.score-b.score;
+  };
+}
 function standoutHtml(cards){
-  var picks = cards.filter(function(c){ return c.score>=0; }).sort(function(a,b){ return b.score-a.score; });
+  var picks = cards.filter(function(c){ return c.score>=0; }).sort(sortByLordThenScore(true));
   if(!picks.length) return "<div class='pillar'>이번 해는 유독 튀는 부분 없이, 여러 영역에 고르게 힘이 퍼져 있는 흐름이에요.</div>";
   return picks.map(function(c){ return c.html; }).join("");
 }
 function cautionHtml(cards){
-  var picks = cards.filter(function(c){ return c.score<0; }).sort(function(a,b){ return a.score-b.score; });
+  var picks = cards.filter(function(c){ return c.score<0; }).sort(sortByLordThenScore(false));
   if(!picks.length) return "<div class='pillar'>이번 해는 특별히 신경 쓸 마찰 없이 무난하게 흘러가는 흐름이에요.</div>";
   return picks.map(function(c){ return c.html; }).join("");
 }
