@@ -157,9 +157,11 @@
   #result.simple-mode .pillarMeta,
   #result.simple-mode .legend,
   #result.simple-mode .alOrb,
-  #result.simple-mode .aspChipTerm{
+  #result.simple-mode .aspChipTerm,
+  #result.simple-mode .jargon{
     display:none;
   }
+  .aspTermTag{color:var(--sub); font-weight:400;}
 
   /* 읽는 순서 가이드 / 목차 */
   .guideBox{
@@ -772,6 +774,15 @@ var ASPECTS = [
   {name:"트라인", angle:120, orb:6, tag:"good",  desc:"막힘없이 순조롭게 풀리는"},
   {name:"충", angle:180, orb:8,  tag:"hard",  desc:"양쪽으로 팽팽하게 당겨지며 균형을 시험하는"}
 ];
+/* 어스펙트 이름(합·섹스타일·스퀘어·트라인·충)은 서양 점성술 용어라 사주만 알고 점성술은 처음인
+   사람에게는 낯설 수 있다. 문장 속에서는 항상 쉬운 우리말 명사(마찰을 주는 각도 등)를 먼저 쓰고,
+   원래 용어는 괄호로 붙여서 '쉬운 설명만 보기'가 켜져 있으면 자동으로 숨긴다 */
+var ASPECT_PLAIN_NOUN = {
+  "합":"하나로 합쳐지는 각도","섹스타일":"기회로 이어지는 각도","스퀘어":"마찰을 주는 각도",
+  "트라인":"순조롭게 풀리는 각도","충":"팽팽하게 맞서는 각도"
+};
+function aspPlainNoun(aspName){ return ASPECT_PLAIN_NOUN[aspName] || aspName; }
+function aspTermTag(aspName){ return "<span class='jargon aspTermTag'>("+aspName+")</span>"; }
 function angleBetween(a,b){ return Math.abs(angDiff(a,b)); }
 function findAspect(lon1,lon2){
   var d = angleBetween(lon1,lon2);
@@ -944,9 +955,9 @@ function buildPlanetCards(opts){
     var sameHouseAsNatal = (house === natalHouse);
     var flavor;
     if(strongest && !sameHouseAsNatal){
-      flavor = "평소(원국)엔 힘이 약하던 영역인데 "+strongest.partner+josaWa(strongest.partner)+" "+strongest.aspName+josaEuro(strongest.aspName)+" 이어져 있어 올해 유독 강하게 드러나요.";
+      flavor = "평소(원국)엔 힘이 약하던 영역인데 "+strongest.partner+josaWa(strongest.partner)+" "+aspPlainNoun(strongest.aspName)+aspTermTag(strongest.aspName)+josaEuro(aspPlainNoun(strongest.aspName))+" 이어져 있어 올해 유독 강하게 드러나요.";
     } else if(strongest){
-      flavor = "원래도 익숙한 영역인 데다 "+strongest.partner+josaWa(strongest.partner)+" "+strongest.aspName+"까지 겹쳐 있어 뚜렷하게 드러나요.";
+      flavor = "원래도 익숙한 영역인 데다 "+strongest.partner+josaWa(strongest.partner)+" "+aspPlainNoun(strongest.aspName)+aspTermTag(strongest.aspName)+"까지 겹쳐 있어 뚜렷하게 드러나요.";
     } else if(!sameHouseAsNatal){
       flavor = "평소(원국)엔 힘이 약하던 영역이라, 올해 유독 낯설게 느껴질 수 있어요.";
     } else {
@@ -985,7 +996,7 @@ function buildPlanetCards(opts){
       // "두 영역이 서로 얽혀 있다"는 훨씬 구체적인 문장으로 이어준다
       if(strongest && strongest.partnerRaw && rulesHousesOf[strongest.partnerRaw] && rulesHousesOf[strongest.partnerRaw].length){
         var partnerThemes = rulesHousesOf[strongest.partnerRaw].map(function(h){ return HOUSE_THEME[h-1]; });
-        flavor += " 마침 "+strongest.partner+josaWa(strongest.partner)+" "+strongest.aspName+josaEuro(strongest.aspName)+" 얽혀 있는데, "+strongest.partner+josaEun(strongest.partner)+" "+partnerThemes.join(", ")+" 영역의 지배행성이기도 해서, 두 영역이 서로 영향을 주고받기 쉬워요.";
+        flavor += " 마침 "+strongest.partner+josaWa(strongest.partner)+" "+aspPlainNoun(strongest.aspName)+aspTermTag(strongest.aspName)+josaEuro(aspPlainNoun(strongest.aspName))+" 얽혀 있는데, "+strongest.partner+josaEun(strongest.partner)+" "+partnerThemes.join(", ")+" 영역의 지배행성이기도 해서, 두 영역이 서로 영향을 주고받기 쉬워요.";
       }
     }
 
@@ -1046,7 +1057,7 @@ function buildPlanetCards(opts){
       lordParts.push("나이에 따라 매년 바뀌는 '연주성' 기법으로 볼 때, "+name+josaI(name)+" 올해 전체를 대표하는 천체예요. 그래서 이 카드의 흐름이 다른 천체보다 한 해 전체 분위기에 더 깊게 깔려요.");
       lordParts.push("'"+HOUSE_THEME[house-1]+"' 쪽에 이 해의 무게중심이 실리고,");
       if(strongest){
-        lordParts.push(strongest.partner+josaWa(strongest.partner)+" "+strongest.aspName+josaEuro(strongest.aspName)+" 이어져 있어 그쪽 기운과 계속 영향을 주고받게 돼요.");
+        lordParts.push(strongest.partner+josaWa(strongest.partner)+" "+aspPlainNoun(strongest.aspName)+aspTermTag(strongest.aspName)+josaEuro(aspPlainNoun(strongest.aspName))+" 이어져 있어 그쪽 기운과 계속 영향을 주고받게 돼요.");
       } else {
         lordParts.push("다른 천체와 뚜렷한 각도 관계 없이 단독으로 움직이는 흐름이라, 남에게 기대기보다 스스로 판단하고 결정하는 힘이 중요해져요.");
       }
@@ -1390,9 +1401,9 @@ function aspectsHtml(srPlanets, order, natalPoints){
   var html = intro + aspectLegendHtml();
   html += aspectSummaryHtml(goodItems.length, hardItems.length, neutralItems.length);
 
-  html += renderAspectGroup("순조로운 흐름", "자연스럽게 기회가 되거나 막힘없이 풀리는 각도들 (섹스타일·트라인)", "🟢", goodItems);
-  html += renderAspectGroup("마찰과 성장", "긴장 속에서 시험대에 오르거나 균형을 요구하는 각도들 (스퀘어·충)", "🟠", hardItems);
-  html += renderAspectGroup("강하게 증폭", "두 기운이 하나로 합쳐져 강해지는 각도들 (합)", "🟣", neutralItems);
+  html += renderAspectGroup("순조로운 흐름", "자연스럽게 기회가 되거나 막힘없이 풀리는 각도들 <span class='jargon'>(섹스타일·트라인)</span>", "🟢", goodItems);
+  html += renderAspectGroup("마찰과 성장", "긴장 속에서 시험대에 오르거나 균형을 요구하는 각도들 <span class='jargon'>(스퀘어·충)</span>", "🟠", hardItems);
+  html += renderAspectGroup("강하게 증폭", "두 기운이 하나로 합쳐져 강해지는 각도들 <span class='jargon'>(합)</span>", "🟣", neutralItems);
 
   return html;
 }
