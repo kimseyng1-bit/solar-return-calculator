@@ -333,6 +333,11 @@
       <div id="summary"></div>
     </div>
 
+    <div class="card" id="sec-now">
+      <h2>🕐 지금 이 순간의 나</h2>
+      <div id="nowSnapshot"></div>
+    </div>
+
     <div class="card">
       <div class="resultHead">
         <div style="color:var(--sub);font-size:13px;">태양 회귀(솔라리턴) 정확한 순간</div>
@@ -493,6 +498,35 @@ function moonLon(jd){
     // 잔차를 회귀분석해 보정한 항 (최대 오차 3.0도 -> 0.1도 이하로 개선)
     + 0.2145*sind(2*Mp) + 0.1181*sind(2*D-2*Mp) - 0.1134*sind(2*F) + 0.1133*sind(2*D-M-Mp);
   return norm360(lon);
+}
+
+/* ---------- '지금 이 순간' 스냅샷 ---------- */
+// 월별 흐름의 각 하우스 구간(1개월씩)이 정확히 언제 시작·끝나는지 계산.
+// 날짜가 31일처럼 다음 달에 없는 날이면 그 달의 마지막 날로 자연스럽게 보정한다(2/29 보정과 같은 방식)
+function daysInMonthUTC(y, m0){ return new Date(Date.UTC(y, m0+1, 0)).getUTCDate(); }
+function addMonthsClampedUTC(y, m0, d, add){
+  var totalM = m0 + add;
+  var ny = y + Math.floor(totalM/12);
+  var nm0 = ((totalM%12)+12)%12;
+  var nd = Math.min(d, daysInMonthUTC(ny, nm0));
+  return Date.UTC(ny, nm0, nd);
+}
+// 실제로 조회하는 '지금'이 이번 1년 사주 흐름 중 몇 번째 하우스(달)에 해당하는지,
+// 그리고 지금 이 순간의 실시간 달(Moon)이 이번 해 사주에서 어느 별자리·하우스를 지나가고 있는지 계산.
+// 달은 하늘에서 가장 빠르게 움직이는 천체라(2~3일에 별자리 하나) '오늘의 감정 흐름'을 보는 데 전통적으로 쓰인다
+function nowSnapshot(srCusps, baseYear, baseMonth, baseDay){
+  var now = new Date();
+  var nowHouse = null;
+  for(var i=0;i<12;i++){
+    var winStart = addMonthsClampedUTC(baseYear, baseMonth-1, baseDay, i);
+    var winEnd = addMonthsClampedUTC(baseYear, baseMonth-1, baseDay, i+1);
+    if(now.getTime()>=winStart && now.getTime()<winEnd){ nowHouse = i+1; break; }
+  }
+  var jdNow = toJD(now.getUTCFullYear(), now.getUTCMonth()+1, now.getUTCDate(), now.getUTCHours()+now.getUTCMinutes()/60);
+  var moonNowLon = moonLon(jdNow);
+  var moonNowSign = signOf(moonNowLon);
+  var moonNowHouse = houseOfLongitude(moonNowLon, srCusps);
+  return {nowHouse:nowHouse, moonNowSign:moonNowSign, moonNowHouse:moonNowHouse};
 }
 
 function gmst(jd){
@@ -1117,7 +1151,29 @@ function cautionHtml(cards){
   return picks.map(function(c){ return c.html; }).join("");
 }
 
-function monthlyFlowHtml(cusps, planets, order, baseYear, baseMonth){
+function nowSnapshotHtml(opts){
+  var nowHouse=opts.nowHouse, moonNowSign=opts.moonNowSign, moonNowHouse=opts.moonNowHouse,
+      baseYear=opts.baseYear, baseMonth=opts.baseMonth;
+
+  if(!nowHouse){
+    return "<div class='pillar'>지금 조회하시는 시점은 입력하신 1년 사주 흐름 기간 밖이에요. 아래 결과는 입력하신 생일 기준 1년간의 흐름을 보여드리는 내용이니 참고해 주세요.</div>";
+  }
+
+  var totalMonth = baseMonth-1+(nowHouse-1);
+  var y = baseYear + Math.floor(totalMonth/12);
+  var m = totalMonth%12+1;
+
+  var html = "<div class='pillar key'><b>지금은 "+y+"년 "+m+"월, '"+HOUSE_THEME[nowHouse-1]+"' 흐름 안에 있어요</b> <span class='pillarMeta'>("+nowHouse+"번째 하우스)</span><br>"
+    + "예를 들어 "+HOUSE_EVENT_EX[nowHouse-1]+" 흐름이 지금 이 시기와 맞닿아 있어요. 더 자세한 내용은 <a href='#sec-monthly'>월별 흐름</a>에서 이 달 카드(🔵 표시)를 확인해 보세요.</div>";
+
+  html += "<div class='pillar'><b>오늘의 달은 "+moonNowSign+" 자리를 지나가고 있어요</b> <span class='pillarMeta'>(실시간 트랜짓 달)</span><br>"
+    + MOON_COMFORT_EX[moonNowSign]
+    + " 지금 이 달은 이번 해 사주에서 <b>"+moonNowHouse+"번째 하우스('"+HOUSE_THEME[moonNowHouse-1]+"')</b>를 지나가고 있어서, 오늘 하루는 특히 그 영역 쪽으로 기분이나 관심이 쏠릴 수 있어요. 달은 2~3일마다 자리를 옮기는 가장 빠른 천체라, 이 느낌은 며칠 안에 다시 바뀔 거예요.</div>";
+
+  return html;
+}
+
+function monthlyFlowHtml(cusps, planets, order, baseYear, baseMonth, nowHouse){
   var byHouse = houseMapOf(cusps, planets, order);
   // 주목 시기 선정은 기존 '주목할 시기' 섹션과 동일하게 핵심 7행성 기준으로만 판단(노드 등 항상 존재하는 점이 끼어들어 과도하게 많은 달이 뽑히는 것을 방지)
   var coreOrderForPicks = ["태양","달","수성","금성","화성","목성","토성"];
@@ -1147,7 +1203,9 @@ function monthlyFlowHtml(cusps, planets, order, baseYear, baseMonth){
         : "여러 천체가 겹쳐 있어 변화의 밀도가 높은 시기예요.";
       whyLine = " "+why;
     }
-    html += "<div class='pillar"+(pick?" key":"")+"'><b>"+year+"년 "+month+"월 · "+house+"번째 하우스 ("+HOUSE_THEME[house-1]+", "+cuspSign+" 기운)</b>"+badge+"<br>"
+    // '지금' 배지 — 조회하는 실제 오늘 날짜가 속하는 달의 카드에 표시
+    var nowBadge = (nowHouse && house===nowHouse) ? " <span class='chip good' title='조회하시는 오늘 날짜가 속한 달이에요'>🔵 지금</span>" : "";
+    html += "<div class='pillar"+(pick || (nowHouse && house===nowHouse)?" key":"")+"'><b>"+year+"년 "+month+"월 · "+house+"번째 하우스 ("+HOUSE_THEME[house-1]+", "+cuspSign+" 기운)</b>"+badge+nowBadge+"<br>"
       + cuspSign+"다운 "+SIGN_TRAIT[cuspSign]+" 태도로, "+HOUSE_EVENT_EX[house-1]+" 흐름이 두드러지는 시기입니다." + (extra? extra+".":"") + whyLine + "</div>";
   }
   return html;
@@ -1297,9 +1355,13 @@ function natalCompareHtml(opts){
   html += "<div class='compareCard'>"
     + "<div class='compareRow compareHead'><span></span><span>원래 나 (원국)</span><span>올해 (솔라리턴)</span></div>"
     + "<div class='compareRow'><span class='cLabel'>상승궁<br><span style=\"font-weight:400;color:#8a84b8;\">(첫인상)</span></span><span>"+natalAscSign+"</span><span class='"+cmpCell(natalAscSign,srAscSign)+"'>"+srAscSign+"</span></div>"
-    + "<div class='compareRow'><span class='cLabel'>태양<br><span style=\"font-weight:400;color:#8a84b8;\">(관심영역)</span></span><span>"+natalSunSign+"</span><span class='"+cmpCell(natalSunSign,srSunSign)+"'>"+srSunSign+"</span></div>"
+    + "<div class='compareRow'><span class='cLabel'>태양<br><span style=\"font-weight:400;color:#8a84b8;\">(당신이 흔히 아는 별자리)</span></span><span>"+natalSunSign+"</span><span class='"+cmpCell(natalSunSign,srSunSign)+"'>"+srSunSign+"</span></div>"
     + "<div class='compareRow'><span class='cLabel'>달<br><span style=\"font-weight:400;color:#8a84b8;\">(감정리듬)</span></span><span>"+natalMoonSign+"</span><span class='"+cmpCell(natalMoonSign,srMoonSign)+"'>"+srMoonSign+"</span></div>"
     + "</div>";
+
+  // '태양' 줄은 솔라리턴의 정의상(태양이 태어난 순간과 정확히 같은 자리로 돌아오는 순간을 계산) 두 열이
+  // 항상 같게 나온다. 설명 없이 두면 '왜 안 바뀌지?' 하는 혼란만 남기므로, 표 바로 아래에서 짚어준다
+  html += "<div class='pillar'><b>'태양' 줄은 항상 똑같이 나오는 게 정상이에요</b><br>여기서 태양은 여러분이 흔히 \"나는 "+natalSunSign+"야\"라고 말할 때 그 별자리예요. 솔라리턴 자체가 '태양이 태어난 순간과 정확히 같은 자리로 돌아오는 때'를 계산하는 방법이라서, 이 줄만큼은 원국과 올해가 항상 같게 나와요. 대신 아래 상승궁·달처럼 시간과 장소에 따라 달라지는 자리들이 이 해에 어떤 새로운 색을 더하는지 보는 게 이 표의 포인트예요.</div>";
 
   // 1. 상승궁 비교 — 같은 별자리인지 아닌지에 따라 문구 분기, 제목은 쉬운 말로
   if(natalAscSign === srAscSign){
@@ -1785,7 +1847,13 @@ function compute(){
   document.getElementById("caution").innerHTML = cautionHtml(planetCards);
   document.getElementById("standout").innerHTML = standoutHtml(planetCards);
 
-  document.getElementById("monthlyFlow").innerHTML = monthlyFlowHtml(srCusps, fullPlanets, fullOrder, f.y, f.m);
+  var nsSnap = nowSnapshot(srCusps, f.y, f.m, f.d);
+  document.getElementById("nowSnapshot").innerHTML = nowSnapshotHtml({
+    nowHouse: nsSnap.nowHouse, moonNowSign: nsSnap.moonNowSign, moonNowHouse: nsSnap.moonNowHouse,
+    baseYear: f.y, baseMonth: f.m
+  });
+
+  document.getElementById("monthlyFlow").innerHTML = monthlyFlowHtml(srCusps, fullPlanets, fullOrder, f.y, f.m, nsSnap.nowHouse);
   document.getElementById("summaryClose").innerHTML = summaryCloseHtml();
 
   drawWheel(srCusps, planets, order);
