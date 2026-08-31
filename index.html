@@ -1737,10 +1737,19 @@ function shareResult(){
 
   if(typeof Kakao !== "undefined" && Kakao.isInitialized && Kakao.isInitialized()){
     try{
+      // objectType "text"는 상단 발신 프로필과 본문 글이 잘 구분되지 않아, 받은 사람이 프로필(앱 이름)
+      // 쪽을 눌러 카카오 자체 알림 설정 화면(apps.kakao.com)으로 빠지는 경우가 있었다.
+      // "feed" + 명시적 버튼을 쓰면 "내 결과 보기"라는 확실한 버튼이 따로 생겨 헷갈릴 일이 없다.
       Kakao.Share.sendDefault({
-        objectType: "text",
-        text: title + "\n\n" + text,
-        link: { mobileWebUrl: url, webUrl: url }
+        objectType: "feed",
+        content: {
+          title: title,
+          description: text,
+          link: { mobileWebUrl: url, webUrl: url }
+        },
+        buttons: [
+          { title: "내 결과 보기", link: { mobileWebUrl: url, webUrl: url } }
+        ]
       });
       return;
     }catch(e){ /* 카카오 공유 실패 시 아래 폴백으로 계속 진행 */ }
