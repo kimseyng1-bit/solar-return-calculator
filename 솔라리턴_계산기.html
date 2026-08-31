@@ -640,7 +640,7 @@ var SIGN_TRAIT = {
   "염소자리":"현실적이고 책임감 있게 쌓아 올리는","물병자리":"독창적이고 틀을 깨려는","물고기자리":"감성적이고 상상력이 풍부한"
 };
 var HOUSE_THEME = ["자아·이미지·시작","재물·가치관·소유","소통·이동·배움","가정·뿌리·안정","연애·자기표현·자녀",
-  "건강·루틴·직장생활","관계·계약·결혼","공동자산·심리·변화","확장·유학·장거리","커리어·사회적 평판","인맥·네트워크·장기목표","휴식·내면·마무리"];
+  "건강·생활습관·직장생활","관계·계약·결혼","공동자산·심리·변화","확장·유학·장거리","커리어·사회적 평판","인맥·네트워크·장기목표","휴식·내면·마무리"];
 
 /* 상승궁(첫인상) — 별자리별 구체적 예시. 흔히 아는 '태양궁'과 다른 개념이라 예시로 체감할 수 있게 구성 */
 var ASC_IMPRESSION_EX = {
@@ -712,7 +712,7 @@ var HOUSE_EVENT_EX = [
   "이직 논의, 자격증·공부, 근거리 이동, SNS·콘텐츠 관련 소식이 오가는",
   "이사, 독립, 가족 문제, 부동산 관련 결정이 따르는",
   "새로운 연애나 취미·창작 활동, 자녀 관련 이슈가 떠오르는",
-  "건강검진이나 업무량 변화, 생활 루틴을 재정비하게 되는",
+  "건강검진이나 업무량 변화, 생활습관을 재정비하게 되는",
   "결혼·동업 등 파트너십 관련 결정이나 중요한 계약, 갈등과 화해가 오가는",
   "대출·투자·상속 등 공동 자금 문제나 심리적 전환점을 맞는",
   "해외·유학·이민 관련 이슈나 장거리 이동, 가치관이 확장되는",
@@ -1153,7 +1153,10 @@ function buildPlanetCards(opts){
       else if(MALEFIC_PLANETS.indexOf(name)>=0) score -= 1;
     }
 
-    cards.push({name:name, house:house, score:score, html:cardHtml, isLord:isLord});
+    // 월별 흐름 섹션에서 '하우스·어스펙트·역행' 같은 용어 없이도 같은 계산 신호(각도 성격·역행·연주성)를
+    // "좋게 작용하는 점 / 조심할 점"으로 재활용할 수 있도록, 카드 데이터에 함께 실어 둔다
+    cards.push({name:name, house:house, score:score, html:cardHtml, isLord:isLord,
+      tag: strongest ? strongest.tag : null, retro: (!isNode && !!retro[name])});
   });
   return cards;
 }
@@ -1197,13 +1200,23 @@ function nowSnapshotHtml(opts){
   return html;
 }
 
-function monthlyFlowHtml(cusps, planets, order, baseYear, baseMonth, nowHouse){
+function monthlyFlowHtml(cusps, planets, order, baseYear, baseMonth, nowHouse, planetCards){
   var byHouse = houseMapOf(cusps, planets, order);
   // 주목 시기 선정은 기존 '주목할 시기' 섹션과 동일하게 핵심 7행성 기준으로만 판단(노드 등 항상 존재하는 점이 끼어들어 과도하게 많은 달이 뽑히는 것을 방지)
   var coreOrderForPicks = ["태양","달","수성","금성","화성","목성","토성"];
   var picks = highlightPicks(cusps, planets, coreOrderForPicks);
   var pickMap = {};
   picks.forEach(function(p){ pickMap[p.house] = p; });
+
+  // '두드러지는 점'/'조금 더 신경 쓰면 좋은 부분' 카드에서 이미 계산해 둔 신호(각도 성격·역행·연주성)를
+  // 그대로 재사용하되, 여기서는 '하우스·어스펙트·역행' 같은 용어를 쓰지 않고 '좋게 작용하는 점/조심할 점'
+  // 이라는 결과 언어로만 옮겨 적는다
+  var cardsByHouse = {};
+  (planetCards||[]).forEach(function(c){
+    if(!cardsByHouse[c.house]) cardsByHouse[c.house] = [];
+    cardsByHouse[c.house].push(c);
+  });
+
   var html="";
   for(var i=0;i<12;i++){
     var house = i+1;
@@ -1212,11 +1225,36 @@ function monthlyFlowHtml(cusps, planets, order, baseYear, baseMonth, nowHouse){
     var year = baseYear + Math.floor(totalMonth/12);
     var month = totalMonth%12+1;
     var pls = byHouse[house] || [];
+    var houseCards = (cardsByHouse[house]||[]).filter(function(c){ return coreOrderForPicks.indexOf(c.name)>=0; });
+
+    var goodOnes = houseCards.filter(function(c){ return c.tag==="good"; });
+    var hardOnes = houseCards.filter(function(c){ return c.tag==="hard"; });
+    var retroOnes = houseCards.filter(function(c){ return c.retro; });
+    var lordCard = houseCards.filter(function(c){ return c.isLord; })[0];
+
+    var toneParts = [];
+    if(goodOnes.length){
+      toneParts.push("시야를 넓히고 새로운 기회를 잡기에 좋은 흐름이 흐르고 있어요.");
+    }
+    if(hardOnes.length){
+      toneParts.push("다만 마찰이나 긴장도 함께 올 수 있어서, 조급하게 밀어붙이기보다 한 박자 늦추는 편이 나아요.");
+    }
+    if(retroOnes.length){
+      toneParts.push("지금은 새로 벌이기보다 예전부터 이어져 온 것을 다시 챙기고 다지는 쪽이 더 잘 맞는 시기예요.");
+    }
+    if(!toneParts.length){
+      toneParts.push("특별히 조심할 것 없이 무난하게 흘러가는 시기예요.");
+    }
+    if(lordCard){
+      toneParts.push("게다가 이 시기는 올 한 해를 대표하는 흐름과 맞닿아 있어서, 다른 달보다 체감이 클 수 있어요.");
+    }
+
     var extra = "";
     if(pls.length){
-      extra = " 특히 이 시기엔 <b>"+pls.join("·")+"</b>"+josaI(pls[pls.length-1])+" 이 하우스에 들어와 있어, "
-        + pls.map(function(p){ return p+"("+signOf(planets[p])+")"+josaEun(p)+" "+PLANET_ACTION[p]; }).join("; ");
+      extra = " 특히 이 시기엔 <b>"+pls.join("·")+"</b>"+josaI(pls[pls.length-1])+" 함께 자리해 있어, "
+        + pls.map(function(p){ return p+"("+signOf(planets[p])+")"+josaEun(p)+" "+PLANET_ACTION[p]; }).join("; ")+".";
     }
+
     // 주목할 시기 배지 — 별도 섹션 대신 해당 월 카드에 바로 이유를 붙여서 통합
     var pick = pickMap[house];
     var badge = "", whyLine = "";
@@ -1227,10 +1265,16 @@ function monthlyFlowHtml(cusps, planets, order, baseYear, baseMonth, nowHouse){
         : "여러 천체가 겹쳐 있어 변화의 밀도가 높은 시기예요.";
       whyLine = " "+why;
     }
+    // '연주성' 배지 — 용어는 쓰지 않되, 이 해 전체를 대표하는 흐름이 겹치는 달임을 눈에 띄게 표시
+    var lordBadge = lordCard ? " <span class='chip good' title='이 해를 대표하는 흐름이 유독 진하게 겹치는 달이에요'>👑 특히 진한 달</span>" : "";
     // '지금' 배지 — 조회하는 실제 오늘 날짜가 속하는 달의 카드에 표시
     var nowBadge = (nowHouse && house===nowHouse) ? " <span class='chip good' title='조회하시는 오늘 날짜가 속한 달이에요'>🔵 지금</span>" : "";
-    html += "<div class='pillar"+(pick || (nowHouse && house===nowHouse)?" key":"")+"'><b>"+year+"년 "+month+"월 · "+house+"번째 하우스 ("+HOUSE_THEME[house-1]+", "+cuspSign+" 기운)</b>"+badge+nowBadge+"<br>"
-      + cuspSign+"다운 "+SIGN_TRAIT[cuspSign]+" 태도로, "+HOUSE_EVENT_EX[house-1]+" 흐름이 두드러지는 시기입니다." + (extra? extra+".":"") + whyLine + "</div>";
+
+    html += "<div class='pillar"+(pick || (nowHouse && house===nowHouse) || lordCard ?" key":"")+"'><b>"+year+"년 "+month+"월 — "+HOUSE_THEME[house-1]+" 흐름이 두드러지는 시기예요</b>"+badge+nowBadge+lordBadge+"<br>"
+      + cuspSign+"다운 "+SIGN_TRAIT[cuspSign]+" 태도로 이 흐름이 드러나기 쉬워요. "
+      + toneParts.join(" ") + " "
+      + "예를 들어 "+HOUSE_EVENT_EX[house-1]+" 일이 생길 수 있어요."
+      + extra + whyLine + "</div>";
   }
   return html;
 }
@@ -1877,7 +1921,7 @@ function compute(){
     baseYear: f.y, baseMonth: f.m
   });
 
-  document.getElementById("monthlyFlow").innerHTML = monthlyFlowHtml(srCusps, fullPlanets, fullOrder, f.y, f.m, nsSnap.nowHouse);
+  document.getElementById("monthlyFlow").innerHTML = monthlyFlowHtml(srCusps, fullPlanets, fullOrder, f.y, f.m, nsSnap.nowHouse, planetCards);
   document.getElementById("summaryClose").innerHTML = summaryCloseHtml();
 
   drawWheel(srCusps, planets, order);
