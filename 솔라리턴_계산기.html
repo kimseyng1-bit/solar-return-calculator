@@ -1739,12 +1739,15 @@ function shareResult(){
     try{
       // objectType "text"는 상단 발신 프로필과 본문 글이 잘 구분되지 않아, 받은 사람이 프로필(앱 이름)
       // 쪽을 눌러 카카오 자체 알림 설정 화면(apps.kakao.com)으로 빠지는 경우가 있었다.
-      // "feed" + 명시적 버튼을 쓰면 "내 결과 보기"라는 확실한 버튼이 따로 생겨 헷갈릴 일이 없다.
+      // "feed" + 명시적 버튼을 쓰면 "내 결과 보기"라는 확실한 버튼이 따로 생기는데, 썸네일 이미지가 없으면
+      // 카카오톡이 버튼 줄을 아예 생략하고 압축된 형태로 보여주는 경우가 있어 썸네일도 함께 넣어준다
+      var shareImageUrl = location.origin + location.pathname.replace(/[^/]*$/, "") + "kakao_app_icon_128.png";
       Kakao.Share.sendDefault({
         objectType: "feed",
         content: {
           title: title,
           description: text,
+          imageUrl: shareImageUrl,
           link: { mobileWebUrl: url, webUrl: url }
         },
         buttons: [
