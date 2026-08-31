@@ -81,6 +81,7 @@
   }
   .pillar .pillarMeta{color:var(--sub); font-weight:400; font-size:12px;}
   .pillar .keyLine{font-weight:600; color:var(--text); margin-top:6px; font-size:13.5px; line-height:1.65;}
+  .pillar .detailLabel{font-size:10.5px; color:var(--gold2); font-weight:700; letter-spacing:.3px; margin-top:10px; margin-bottom:2px;}
   .pillar .subLine{font-size:11.5px; color:var(--sub); margin-top:4px; line-height:1.65;}
   .pillar a{color:var(--gold2); text-decoration:none; border-bottom:1px dotted var(--gold2);}
   .pillar a:hover{color:var(--gold);}
@@ -1005,6 +1006,10 @@ function buildPlanetCards(opts){
       if(pairNote) flavor += " "+pairNote;
     }
 
+    // 여기까지가 '왜 이렇게 나타나는지'에 대한 핵심 설명. 아래부터는 추가로 연결되는 것들(상승궁 지배·
+    // 원국 동일사인·지배 하우스 체인·하우스 별자리 색·도수 뉘앙스)이라 문단을 나눠 한눈에 구분되게 한다
+    flavor += "<br><br>";
+
     // 개인화 6) SR 상승궁 지배행성 — '마음이 쏠리는 영역(태양)'과 별개로 '실제 행동이 향하는 영역'을 짚어주는 기법.
     // 새 노트를 따로 만들지 않고 위 flavor 문장에 자연스럽게 이어 붙여 한 흐름으로 읽히게 한다
     if(ascRulerName && name===ascRulerName){
@@ -1051,10 +1056,13 @@ function buildPlanetCards(opts){
       ? " 게다가 무르익어 절정에 오른 도수라, 이 기운이 가장 또렷하고 강하게 체감될 시점이에요."
       : " 게다가 마무리 단계에 접어든 도수라, 다음 단계로 넘어가기 직전의 완성도 있는 형태로 나타나기 쉬워요.";
     flavor += degreeNuance;
+    if(crossRef) flavor += crossRef;
 
     var cardClass = "pillar" + (isLuminary ? " key" : "");
     var headline = PLANET_HEADLINE[name] || OUTER_HEADLINE[name] || (name+"의 기운이 나타나는 부분");
 
+    // 예시·근거·연결·시기까지 한 문단에 다 몰아넣으면 어디부터 어디까지가 한 덩어리인지 구분이 안 되므로,
+    // '자세히 보기' 소제목 하나로 묶되 그 안에서는 성격이 바뀌는 지점마다 빈 줄(<br><br>)로 나눠 준다
     var cardHtml = "<div class='"+cardClass+"'>"
       + "<b>"+headline+" — "+HOUSE_THEME[house-1]+"</b>"+retroBadge+luminaryBadge+clusterBadge+lordBadge+angleBadge
       + " <span class='pillarMeta'>("+glyph+name+" · "+sign+" "+degInSign(lon)+"° · "+house+"번째 하우스)</span>"
@@ -1062,7 +1070,8 @@ function buildPlanetCards(opts){
           var tplFn = PLANET_KEYLINE_TEMPLATE[name];
           return tplFn ? tplFn(sign, SIGN_TRAIT[sign], PLANET_ACTION[name]) : sign+"다운 "+SIGN_TRAIT[sign]+" "+name+josaI(name)+" "+PLANET_ACTION[name];
         })()+"</div>"
-      + "<div class='subLine'>"+exampleClause(HOUSE_EVENT_EX[house-1], strongest ? strongest.tag : null)+" "+flavor+" 정확한 시기는 <a href='#sec-monthly'>"+year+"년 "+month+"월경 월별 흐름</a>에서 볼 수 있습니다."+crossRef+"</div>"
+      + "<div class='detailLabel'>자세히 보기</div>"
+      + "<div class='subLine'>"+exampleClause(HOUSE_EVENT_EX[house-1], strongest ? strongest.tag : null)+" "+flavor+"<br><br>이 흐름이 특히 도드라지는 시기는 <a href='#sec-monthly'>"+year+"년 "+month+"월경</a>이에요. 자세한 내용은 월별 흐름에서 확인해 보세요.</div>"
       + (OUTER_MEANING[name] ? "<div class='subLine'>"+OUTER_MEANING[name]+"</div>" : "");
 
     // 노드는 북쪽(나아갈 방향)과 정반대인 남쪽(익숙한 습관) 위치도 함께 보여줌
@@ -1349,7 +1358,7 @@ function summaryHtml(opts){
 // 예전 '마무리 결론' 섹션의 역할을 흡수 — 위 요약 안에서 이미 다룬 내용(상승궁·역행·주목 시기 등)을 다시 말하지 않고
 // 두 새 섹션과 월별 흐름으로 안내만 하는 짧은 마무리 문단
 function summaryCloseHtml(){
-  return "<p>이 해석은 정해진 운명이 아니라 <b>'올해는 이런 방향으로 힘이 실린다'</b>는 참고 자료입니다. 구체적으로 어떤 천체가 그런 흐름을 만드는지는 아래 <a href='#sec-caution'>조금 더 신경 쓰면 좋은 부분</a>과 <a href='#sec-standout'>두드러지는 점</a>에서, 정확한 시기는 <a href='#sec-monthly'>월별 흐름</a>에서 확인해 보세요. 실제 선택은 스스로 판단해 내리는 것을 추천합니다.</p>";
+  return "<p>이 해석은 정해진 운명이 아니라 <b>'올해는 이런 방향으로 힘이 실린다'</b>는 참고 자료입니다. 구체적으로 어떤 천체가 그런 흐름을 만드는지는 아래 <a href='#sec-caution'>조금 더 신경 쓰면 좋은 부분</a>과 <a href='#sec-standout'>두드러지는 점</a>에서, 대략적인 시기는 <a href='#sec-monthly'>월별 흐름</a>에서 확인해 보세요. 실제 선택은 스스로 판단해 내리는 것을 추천합니다.</p>";
 }
 
 function natalCompareHtml(opts){
