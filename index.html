@@ -1076,8 +1076,23 @@ function buildPlanetCards(opts){
     }
 
     // 역행 중이면 별도 줄로 안내(노드는 '항상 역행'이 구조적 특성이라 배지로만 표시)
+    // '역행 = 과거로 되짚어감'이라는 기법을, 위 flavor에서 이미 계산해 둔 이 천체만의 실제 연결
+    // (어스펙트 상대가 있는지 · 다른 하우스도 지배하는지)이 있는지에 따라 다르게 풀어쓴다.
+    // 다만 위 flavor에서 이미 상대 행성명·하우스명을 구체적으로 밝혔으므로, 여기서는 그걸 다시
+    // 나열하지 않고 '위에서 말한 그 연결'을 가리키는 방식으로만 이어붙여 중복을 피한다
     if(!isNode && retro[name]){
-      cardHtml += "<div class='retroNote'>↺ 역행 중이라, 겉으로 드러나기보다 재점검·재정비·복습의 방향으로 흐를 가능성이 큽니다.</div>";
+      var retroLead = "↺ 역행 중이라 이 흐름은 새로 시작되기보다 과거로 되짚어가는 쪽에 가까운데, ";
+      var retroTail;
+      if(strongest && rulesHouses.length){
+        retroTail = "위에서 말한 그 얽힘도 예전부터 이어져 온 문제가 다시 떠오르는 형태일 가능성이 크고, 함께 다스리는 다른 영역에서도 비슷하게 묵은 문제가 다시 떠오를 수 있어요.";
+      } else if(strongest){
+        retroTail = "위에서 말한 그 얽힘도 예전부터 이어져 온 문제가 다시 떠오르는 형태일 가능성이 커요.";
+      } else if(rulesHouses.length){
+        retroTail = "함께 다스리는 다른 영역에서도 비슷하게 묵은 문제가 다시 떠오를 수 있어요.";
+      } else {
+        retroTail = "겉으로 드러나기보다 재점검·재정비·복습의 방향으로 흐를 가능성이 커요.";
+      }
+      cardHtml += "<div class='retroNote'>"+retroLead+retroTail+"</div>";
     }
     // 앵글(ASC·DC·MC·IC) 근접이면 별도 줄로 안내 — 그 기운이 삶의 표면으로 유난히 직접적으로 드러난다고 보는 기법
     if(angleHit){
