@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>튀르키예식 사주 (솔라리턴) 계산기</title>
+<!-- 카카오톡 공유하기: 카카오 디벨로퍼스(https://developers.kakao.com)에서 무료로 앱을 만든 뒤,
+     [내 애플리케이션] > [앱 설정] > [플랫폼] > [Web]에 이 사이트 도메인을 등록하고,
+     [앱 설정] > [앱 키]에서 발급되는 'JavaScript 키'를 아래 스크립트의 KAKAO_JS_KEY 값에 넣어야
+     '카카오톡으로 공유하기' 버튼이 실제로 동작합니다. 키를 넣지 않아도 사이트는 정상 작동하며,
+     이 경우 공유 버튼은 자동으로 브라우저 기본 공유/링크 복사로 대체됩니다. -->
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.2/kakao.min.js" crossorigin="anonymous"></script>
 <style>
   :root{
     --bg1:#0f0c29; --bg2:#302b63; --bg3:#24243e;
@@ -50,6 +56,13 @@
   .field{margin-bottom:10px;}
   .hint{font-size:11px;color:#8a84b8;margin-top:4px;}
   .btnRow{text-align:center; margin:22px 0;}
+  .shareRow{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:0 0 18px;}
+  .shareBtn{
+    border:1px solid var(--line); background:#150f36; color:var(--text);
+    padding:9px 16px; border-radius:20px; font-size:13px; cursor:pointer;
+  }
+  .shareBtn:hover{filter:brightness(1.2);}
+  .shareBtn.kakao{border-color:#f5d67a88; color:var(--gold2); font-weight:600;}
   button.main{
     background:linear-gradient(90deg,var(--gold),var(--gold2)); color:#2a2210; border:none;
     padding:13px 34px; border-radius:30px; font-size:15px; font-weight:700; cursor:pointer;
@@ -332,6 +345,11 @@
     <div class="summaryCard" id="sec-summary">
       <h2>✦ 사주 전체 요약</h2>
       <div id="summary"></div>
+    </div>
+
+    <div class="shareRow">
+      <button class="shareBtn kakao" onclick="shareResult()">💬 카카오톡으로 공유하기</button>
+      <button class="shareBtn copy" onclick="copyShareLink()">🔗 링크 복사</button>
     </div>
 
     <div class="card" id="sec-now">
@@ -1646,6 +1664,129 @@ function resolveCity(selectId, latId, lonId, tzId){
 document.getElementById("birthDate").value="1996-03-15";
 document.getElementById("lastDate").value="2025-03-15";
 
+/* ---------- 카카오톡 공유하기 ---------- */
+// 카카오 디벨로퍼스(https://developers.kakao.com)에서 발급받은 JavaScript 키를 여기에 넣으면
+// '카카오톡으로 공유하기' 버튼이 카카오톡 전용 카드형 공유로 동작한다. 비워두면 자동으로
+// 브라우저 기본 공유(Web Share API) 또는 링크 복사로 대체되므로, 키가 없어도 사이트는 정상 작동한다.
+var KAKAO_JS_KEY = "";
+if(typeof Kakao !== "undefined" && KAKAO_JS_KEY){
+  try{ Kakao.init(KAKAO_JS_KEY); }catch(e){}
+}
+
+// 지금 입력 폼에 있는 값 그대로 다시 계산할 수 있는 링크를 만든다 — 도시는 이름이 아니라
+// CITIES 배열 안 순서(인덱스)로 저장하므로, 그 순서를 바꾸지 않는 한 링크는 계속 유효하다
+function buildShareUrl(){
+  var params = new URLSearchParams();
+  params.set("bd", document.getElementById("birthDate").value);
+  params.set("bt", document.getElementById("birthTime").value || "12:00");
+  var bSel = document.getElementById("birthCity").value;
+  params.set("bc", bSel);
+  if(bSel === "custom"){
+    params.set("blat", document.getElementById("birthCustomLat").value);
+    params.set("blon", document.getElementById("birthCustomLon").value);
+    params.set("btz", document.getElementById("birthCustomTz").value);
+  }
+  params.set("ld", document.getElementById("lastDate").value);
+  params.set("lt", document.getElementById("lastTime").value || "12:00");
+  var lSel = document.getElementById("lastCity").value;
+  params.set("lc", lSel);
+  if(lSel === "custom"){
+    params.set("llat", document.getElementById("lastCustomLat").value);
+    params.set("llon", document.getElementById("lastCustomLon").value);
+    params.set("ltz", document.getElementById("lastCustomTz").value);
+  }
+  return location.origin + location.pathname + "?" + params.toString();
+}
+
+// 리포트 전체를 다 보낼 수는 없으니, 한눈에 보기 핵심만 3~4줄로 요약해 링크와 함께 보낸다
+function buildShareSummaryText(){
+  var d = window.__srShare;
+  if(!d) return "지금 막 계산한 1년 사주(솔라리턴) 결과를 확인해 보세요.";
+  return d.baseYear+"년 "+d.baseMonth+"월 "+d.baseDay+"일부터 1년간의 사주 흐름이에요.\n"
+    + "겉으로 드러나는 인상은 "+d.ascSign+", 마음이 가장 쏠리는 영역은 '"+d.sunHouseTheme+"'예요.\n"
+    + "이 해를 대표하는 흐름은 "+d.lordOfYearName+"이 만들어가요.";
+}
+
+function copyToClipboard(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).catch(function(){ fallbackCopy(text); });
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text){
+  var ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand("copy"); }catch(e){}
+  document.body.removeChild(ta);
+}
+
+function copyShareLink(){
+  var url = buildShareUrl();
+  copyToClipboard(url);
+  alert("결과 링크를 복사했어요. 카카오톡이나 문자에 붙여넣어 보내보세요!\n\n"+url);
+}
+
+// 우선순위: 카카오 공유(카카오 앱 키가 등록돼 있을 때) → 브라우저 기본 공유(모바일 대부분 지원,
+// 카카오톡이 설치돼 있으면 그 목록에도 뜬다) → 그마저 안 되면 링크 복사로 대체
+function shareResult(){
+  var url = buildShareUrl();
+  var text = buildShareSummaryText();
+  var title = "내 1년 사주(솔라리턴) 결과가 나왔어요";
+
+  if(typeof Kakao !== "undefined" && Kakao.isInitialized && Kakao.isInitialized()){
+    try{
+      Kakao.Share.sendDefault({
+        objectType: "text",
+        text: title + "\n\n" + text,
+        link: { mobileWebUrl: url, webUrl: url }
+      });
+      return;
+    }catch(e){ /* 카카오 공유 실패 시 아래 폴백으로 계속 진행 */ }
+  }
+  if(navigator.share){
+    navigator.share({ title: title, text: text, url: url }).catch(function(){});
+    return;
+  }
+  copyToClipboard(url);
+  alert("이 브라우저에서는 공유 기능을 지원하지 않아 결과 링크를 복사했어요. 카카오톡에 붙여넣어 보내보세요!\n\n"+title+"\n"+text+"\n"+url);
+}
+
+// 공유받은 링크로 들어온 경우, URL의 값을 그대로 입력 폼에 채워 넣고 자동으로 계산까지 실행한다
+function applyShareParamsFromUrl(){
+  var params = new URLSearchParams(location.search);
+  if(!params.has("bd") || !params.has("ld")) return; // 공유 링크가 아니면 기본 화면 그대로 둔다
+  document.getElementById("birthDate").value = params.get("bd") || "";
+  document.getElementById("birthTime").value = params.get("bt") || "12:00";
+  var bc = params.get("bc");
+  if(bc !== null){
+    document.getElementById("birthCity").value = bc;
+    if(bc === "custom"){
+      document.getElementById("birthCustom").classList.add("show");
+      document.getElementById("birthCustomLat").value = params.get("blat") || "";
+      document.getElementById("birthCustomLon").value = params.get("blon") || "";
+      document.getElementById("birthCustomTz").value = params.get("btz") || "";
+    }
+  }
+  document.getElementById("lastDate").value = params.get("ld") || "";
+  document.getElementById("lastTime").value = params.get("lt") || "12:00";
+  var lc = params.get("lc");
+  if(lc !== null){
+    document.getElementById("lastCity").value = lc;
+    if(lc === "custom"){
+      document.getElementById("lastCustom").classList.add("show");
+      document.getElementById("lastCustomLat").value = params.get("llat") || "";
+      document.getElementById("lastCustomLon").value = params.get("llon") || "";
+      document.getElementById("lastCustomTz").value = params.get("ltz") || "";
+    }
+  }
+  compute();
+  var resultEl = document.getElementById("result");
+  if(resultEl) resultEl.scrollIntoView({behavior:"smooth", block:"start"});
+}
+document.addEventListener("DOMContentLoaded", applyShareParamsFromUrl);
+
 /* 연도 4자리 제한: 입력 중 5자리 이상이면 앞 4자리로 즉시 잘라낸다 */
 function clampYearInput(id){
   var input = document.getElementById(id);
@@ -1790,6 +1931,14 @@ function compute(){
   var profectedHouseNum = (((ageAtReturn % 12) + 12) % 12) + 1;
   var profectedSign = SIGNS[(((natalAscSignIdx + ageAtReturn) % 12) + 12) % 12];
   var lordOfYearName = SIGN_RULER[profectedSign];
+
+  // 카카오톡 공유하기 등에서 쓸 핵심 요약 재료 — 카드 렌더링과 무관하게 여기서 한 번만 저장해 두고,
+  // 공유 버튼(shareResult)이 클릭될 때 최신 계산 결과를 그대로 가져다 쓴다
+  window.__srShare = {
+    baseYear: f.y, baseMonth: f.m, baseDay: f.d,
+    ascSign: ascSign, sunHouseTheme: HOUSE_THEME[sunHouse-1], moonSign: moonSign,
+    lordOfYearName: lordOfYearName, lCityName: lCity.name
+  };
 
   // 다음 해 연주성 미리보기 — 프로펙션은 매년 하나씩 하우스를 옮겨가는 기법이라, 나이를 1살 더한 값으로
   // 같은 계산을 한 번 더 하면 '내년엔 주제가 어디로 넘어가는지'를 미리 보여줄 수 있다
